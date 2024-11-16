@@ -14,12 +14,13 @@ function main() {
     const context = canvas.getContext("2d");
     const socket = new WebSocket("ws://localhost:1205/ws");
 
+    renderGame({ id: "", status: { action: "", target: "", x: 0, y: 0 } }, context);
     socket.onmessage = (event) => {
         // /**
         //  * @type{{ id: string, status: { action: string, target: string, x: number, y: number}}}
         //  */
         const gameState = JSON.parse(event.data);
-        renderGame(gameState);
+        renderGame(gameState, context);
     };
 
     window.addEventListener("keydown", function (event) {
@@ -38,17 +39,26 @@ function main() {
                 break;
         }
     });
-
-    /**
-     * @param {string} actionType
-     * @param {string} key
-     */
 }
 
 /**
  * @param{{ id: string, status: { action: string, target: string, x: number, y: number}}} gameState
+ * @param {CanvasRenderingContext2D|null} context
  */
-function renderGame(gameState) {}
+function renderGame(gameState, context) {
+    const playerFrame = fetchPlayerFrames();
+
+    console.log(playerFrame.blueWalkLeft[0]);
+    const foo = document.getElementById("img-container");
+    if (foo) {
+        console.log("ye");
+        fetch(playerFrame.blueWalkLeft[0])
+            .then((response) => response.text())
+            .then((content) => {
+                foo.innerHTML = content;
+            });
+    }
+}
 
 /**
  * @param {string} actionType
