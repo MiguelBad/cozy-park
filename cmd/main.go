@@ -30,6 +30,11 @@ type Status struct {
 	Y      int    `json:"y"`
 }
 
+type ClientPayload struct {
+	Id     string  `json:"id"`
+	Status *Status `json:"status"`
+}
+
 func main() {
 	http.HandleFunc("/ws", handleConnections)
 	go handleBroadcast()
@@ -89,14 +94,15 @@ func handleAction(player *Player) {
 // syncs actions of a player to the whole server
 func handleBroadcast() {
 	for {
-		playerStatus := <-broadcast
+		player := <-broadcast
 
-		for player := range playerList {
-			err := player.conn.WriteJSON(playerStatus)
+		for p := range playerList {
+			payload := &ClientPayload{Id: player.id, Status: player.status}
+			err := player.conn.WriteJSON(*payload)
 
 			if err != nil {
 				log.Printf("%v failed to update\n", err)
-				player.conn.Close()
+				p.conn.Close()
 				mu.Lock()
 				delete(playerList, player)
 				mu.Unlock()
