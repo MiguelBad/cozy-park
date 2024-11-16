@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/MiguelBad/5th-aniv#readme",
   "devDependencies": {
-    "jsdoc": "^4.0.4"
+    "jsdoc": "^4.0.4",
+    "live-server": "^1.2.2"
   }
 }
