@@ -58,18 +58,18 @@ func handleConnections(w http.ResponseWriter, req *http.Request) {
 	mu.Unlock()
 	log.Printf("%v connected\n", player.id)
 
+	go handleAction(player)
+}
+
+func handleAction(player *Player) {
 	defer func() {
-		conn.Close()
+		player.conn.Close()
 		mu.Lock()
 		delete(playerList, player)
 		mu.Unlock()
 		log.Printf("%v disconnected.", player.id)
 	}()
 
-	go handleAction(player)
-}
-
-func handleAction(player *Player) {
 	for {
 		var playerStatus Status
 		err := player.conn.ReadJSON(&playerStatus)
