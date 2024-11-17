@@ -1,6 +1,6 @@
 /**
  * @typedef {{ blueWalkLeft: HTMLImageElement[]; blueWalkRight: HTMLImageElement[]; pinkWalkLeft: HTMLImageElement[]; pinkWalkRight: HTMLImageElement[]; }} PlayerFrame
- * @typedef {{ action: string, target: string, x: number, y: number, frame: number, direction: string, pressing: boolean}} Status
+ * @typedef {{ action: string, target: string, x: number, y: number, frame: number, direction: string}} Status
  * @typedef {{ id: string, status: Status}} PlayerState
  */
 
@@ -68,7 +68,7 @@ function main(playerFrame) {
 
     window.addEventListener("keyup", () => {
         lastPressed = "";
-        sendData("stop", socket);
+        sendData("stop", socket, "");
     });
 }
 
@@ -92,5 +92,6 @@ function sendData(actionType, socket, key) {
         type: actionType,
         key: key,
     };
+    console.log(action)
     socket.send(JSON.stringify(action));
 }

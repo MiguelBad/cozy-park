@@ -2,47 +2,32 @@ package main
 
 import (
 	"log"
-	// "time"
+	"time"
 )
 
-func handleMovement(playerStatus *Status, key string) {
-	log.Println(playerStatus.Pressing)
-	// for playerStatus.Pressing {
-	// 	log.Println(playerStatus.Pressing)
-	// 	switch key {
-	// 	case "w":
-	// 		playerStatus.Y = playerStatus.Y - 2
-	// 		tickerMS := time.NewTicker(100 * time.Millisecond)
-	// 		for i := 0; i < 2; i++ {
-	// 			<-tickerMS.C
-	// 			playerStatus.Y = playerStatus.Y - 2
-	// 		}
-	//
-	// 	case "a":
-	// 		playerStatus.X = playerStatus.X - 2
-	// 		playerStatus.Direction = "left"
-	// 		tickerMS := time.NewTicker(100 * time.Millisecond)
-	// 		for i := 0; i < 2; i++ {
-	// 			<-tickerMS.C
-	// 			playerStatus.X = playerStatus.X - 2
-	// 		}
-	//
-	// 	case "s":
-	// 		playerStatus.Y = playerStatus.Y + 2
-	// 		tickerMS := time.NewTicker(100 * time.Millisecond)
-	// 		for i := 0; i < 2; i++ {
-	// 			<-tickerMS.C
-	// 			playerStatus.Y = playerStatus.Y + 2
-	// 		}
-	//
-	// 	case "d":
-	// 		playerStatus.X = playerStatus.X + 2
-	// 		playerStatus.Direction = "right"
-	// 		tickerMS := time.NewTicker(100 * time.Millisecond)
-	// 		for i := 0; i < 2; i++ {
-	// 			<-tickerMS.C
-	// 			playerStatus.X = playerStatus.X + 2
-	// 		}
-	// 	}
-	// }
+func handleMovement(player *Player, key string) {
+	for player.status.moving {
+		mu.Lock()
+		switch key {
+		case "w":
+			player.status.Y = player.status.Y - 30
+
+		case "a":
+			player.status.X = player.status.X - 30
+			player.status.Direction = "left"
+
+		case "s":
+			player.status.Y = player.status.Y + 30
+
+		case "d":
+			player.status.X = player.status.X + 30
+			player.status.Direction = "right"
+		}
+		mu.Unlock()
+
+		broadcast <- player
+
+		time.Sleep(100 * time.Millisecond)
+		log.Println("moving")
+	}
 }

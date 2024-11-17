@@ -30,7 +30,7 @@ type Status struct {
 	Y         int    `json:"y"`
 	Frame     int    `json:"frame"`
 	Direction string `json:"direction"`
-	Pressing  bool   `json:"pressing"`
+	moving    bool
 }
 
 type ClientData struct {
@@ -96,11 +96,15 @@ func handleAction(player *Player) {
 
 		switch data.Type {
 		case "move":
-			player.status.Pressing = true
-			handleMovement(player.status, data.Key)
+			mu.Lock()
+			player.status.moving = true
+			mu.Unlock()
+			go handleMovement(player, data.Key)
 		case "stop":
-			player.status.Pressing = false
-			handleMovement(player.status, data.Key)
+			mu.Lock()
+			player.status.moving = false
+			mu.Unlock()
+			// go handleMovement(player.status, data.Key)
 		default:
 		}
 
@@ -115,7 +119,7 @@ func handleBroadcast() {
 
 		for p := range playerList {
 			payload := &ClientPayload{Id: player.id, Status: player.status}
-			err := player.conn.WriteJSON(*payload)
+			err := p.conn.WriteJSON(*payload)
 
 			if err != nil {
 				log.Printf("%v failed to update\n", err)
