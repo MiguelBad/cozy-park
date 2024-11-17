@@ -1,7 +1,7 @@
 /**
- * @returns {{blueWalkLeft: HTMLImageElement[], blueWalkRight: HTMLImageElement[], pinkWalkLeft: HTMLImageElement[], pinkWalkRight: HTMLImageElement[]}}
+ * @returns {Promise<{blueWalkLeft: HTMLImageElement[], blueWalkRight: HTMLImageElement[], pinkWalkLeft: HTMLImageElement[], pinkWalkRight: HTMLImageElement[]}>}
  */
-function fetchPlayerFrames() {
+async function fetchPlayerFrames() {
     const walkFrame = {
         blueWalkLeft: [
             "assets/frames/walk/blue-left-1st.png",
@@ -35,22 +35,27 @@ function fetchPlayerFrames() {
         pinkWalkRight: [],
     };
 
-    /**
-     * @param {string[]} frames
-     * @param {HTMLImageElement[]} target
-     */
-    function preloadImages(frames, target) {
-        for (const frame of frames) {
-            const image = new Image();
-            target.push(image);
-            image.src = frame;
-        }
-    }
-
-    preloadImages(walkFrame.blueWalkLeft, preloaded.blueWalkLeft);
-    preloadImages(walkFrame.blueWalkRight, preloaded.blueWalkRight);
-    preloadImages(walkFrame.pinkWalkLeft, preloaded.pinkWalkLeft);
-    preloadImages(walkFrame.pinkWalkRight, preloaded.pinkWalkRight);
+    await preloadImages(walkFrame.blueWalkLeft, preloaded.blueWalkLeft);
+    await preloadImages(walkFrame.blueWalkRight, preloaded.blueWalkRight);
+    await preloadImages(walkFrame.pinkWalkLeft, preloaded.pinkWalkLeft);
+    await preloadImages(walkFrame.pinkWalkRight, preloaded.pinkWalkRight);
 
     return preloaded;
+}
+
+/**
+ * @param {string[]} frames
+ * @param {HTMLImageElement[]} target
+ */
+function preloadImages(frames, target) {
+    return Promise.all(
+        frames.map((frame) => {
+            return new Promise((resolve) => {
+                const image = new Image();
+                image.src = frame;
+                image.onload = () => resolve(image);
+                target.push(image);
+            });
+        })
+    );
 }
