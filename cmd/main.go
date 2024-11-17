@@ -24,10 +24,18 @@ type Player struct {
 }
 
 type Status struct {
-	Action string `json:"action"`
-	Target string `json:"target"`
-	X      int    `json:"x"`
-	Y      int    `json:"y"`
+	Action    string `json:"action"`
+	Target    string `json:"target"`
+	X         int    `json:"x"`
+	Y         int    `json:"y"`
+	Frame     int    `json:"frame"`
+	Direction string `json:"direction"`
+	Pressing  bool   `json:"pressing"`
+}
+
+type ClientData struct {
+	Type string `json:"type"`
+	Key  string `json:"key"`
 }
 
 type ClientPayload struct {
@@ -63,6 +71,9 @@ func handleConnections(w http.ResponseWriter, req *http.Request) {
 	mu.Unlock()
 	log.Printf("%v connected\n", player.id)
 
+	payload := &ClientPayload{Id: player.id, Status: player.status}
+	player.conn.WriteJSON(*payload)
+
 	go handleAction(player)
 }
 
@@ -76,16 +87,22 @@ func handleAction(player *Player) {
 	}()
 
 	for {
-		var playerStatus Status
-		err := player.conn.ReadJSON(&playerStatus)
+		var data ClientData
+		err := player.conn.ReadJSON(&data)
 		if err != nil {
 			log.Printf("error reading player action:\n%v\n", err)
 			return
 		}
 
-		mu.Lock()
-		player.status = &playerStatus
-		mu.Unlock()
+		switch data.Type {
+		case "move":
+			player.status.Pressing = true
+			handleMovement(player.status, data.Key)
+		case "stop":
+			player.status.Pressing = false
+			handleMovement(player.status, data.Key)
+		default:
+		}
 
 		broadcast <- player
 	}
