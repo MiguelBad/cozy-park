@@ -1,29 +1,56 @@
 /**
- * @returns {{blueWalkLeft: string[], blueWalkRight: string[], pinkWalkLeft: string[], pinkWalkRight: string[]}}
+ * @returns {{blueWalkLeft: HTMLImageElement[], blueWalkRight: HTMLImageElement[], pinkWalkLeft: HTMLImageElement[], pinkWalkRight: HTMLImageElement[]}}
  */
 function fetchPlayerFrames() {
-    return {
+    const walkFrame = {
         blueWalkLeft: [
-            "../../assets/blue-left-1st.svg",
-            "../../assets/blue-left-2nd.svg",
-            "../../assets/blue-left-3rd.svg",
+            "assets/frames/walk/blue-left-1st.png",
+            "assets/frames/walk/blue-left-2nd.png",
+            "assets/frames/walk/blue-left-3rd.png",
         ],
         blueWalkRight: [
-            "../../assets/blue-right-1st.svg",
-            "../../assets/blue-right-2nd.svg",
-            "../../assets/blue-right-3rd.svg",
+            "assets/frames/walk/blue-right-1st.png",
+            "assets/frames/walk/blue-right-2nd.png",
+            "assets/frames/walk/blue-right-3rd.png",
         ],
-
         pinkWalkLeft: [
-            "../../assets/pink-left-1st.svg",
-            "../../assets/pink-left-2nd.svg",
-            "../../assets/pink-left-3rd.svg",
+            "assets/frames/walk/pink-left-1st.png",
+            "assets/frames/walk/pink-left-2nd.png",
+            "assets/frames/walk/pink-left-3rd.png",
         ],
-
         pinkWalkRight: [
-            "../../assets/pink-right-1st.svg",
-            "../../assets/pink-right-2nd.svg",
-            "../../assets/pink-right-3rd.svg",
+            "assets/frames/walk/pink-right-1st.png",
+            "assets/frames/walk/pink-right-2nd.png",
+            "assets/frames/walk/pink-right-3rd.png",
         ],
     };
+
+    /**
+     * @type {{blueWalkLeft: HTMLImageElement[], blueWalkRight: HTMLImageElement[], pinkWalkLeft: HTMLImageElement[], pinkWalkRight: HTMLImageElement[]}}
+     */
+    const preloaded = {
+        blueWalkLeft: [],
+        blueWalkRight: [],
+        pinkWalkLeft: [],
+        pinkWalkRight: [],
+    };
+
+    /**
+     * @param {string[]} frames
+     * @param {HTMLImageElement[]} target
+     */
+    function preloadImages(frames, target) {
+        for (const frame of frames) {
+            const image = new Image();
+            target.push(image);
+            image.src = frame;
+        }
+    }
+
+    preloadImages(walkFrame.blueWalkLeft, preloaded.blueWalkLeft);
+    preloadImages(walkFrame.blueWalkRight, preloaded.blueWalkRight);
+    preloadImages(walkFrame.pinkWalkLeft, preloaded.pinkWalkLeft);
+    preloadImages(walkFrame.pinkWalkRight, preloaded.pinkWalkRight);
+
+    return preloaded;
 }

@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function() {
     main();
 });
 
@@ -23,7 +23,7 @@ function main() {
         renderGame(gameState, context);
     };
 
-    window.addEventListener("keydown", function (event) {
+    window.addEventListener("keydown", function(event) {
         switch (event.key) {
             case "w":
                 sendMovement("move", "w", socket);
@@ -47,17 +47,6 @@ function main() {
  */
 function renderGame(gameState, context) {
     const playerFrame = fetchPlayerFrames();
-
-    console.log(playerFrame.blueWalkLeft[0]);
-    const foo = document.getElementById("img-container");
-    if (foo) {
-        console.log("ye");
-        fetch(playerFrame.blueWalkLeft[0])
-            .then((response) => response.text())
-            .then((content) => {
-                foo.innerHTML = content;
-            });
-    }
 }
 
 /**
