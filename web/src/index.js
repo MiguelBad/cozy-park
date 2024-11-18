@@ -9,6 +9,32 @@ document.addEventListener("DOMContentLoaded", async function () {
     main(playerFrame);
 });
 
+class handleMovement {
+    /**
+     * @param {number} x
+     * @param {number} y
+     */
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.moving = false;
+    }
+
+    /**
+     * @param {number} end
+     * @param {number} alpha
+     * @returns {{x: number, y: number}}
+     */
+    interpolate(end, alpha) {
+        return {
+            x: this.x + (this.x - end) * alpha,
+            y: this.y + (this.y - end) * alpha,
+        };
+    }
+
+    extrapolate() {}
+}
+
 /**
  * @param {PlayerFrame} playerFrame
  */
@@ -30,46 +56,46 @@ function main(playerFrame) {
 
     const socket = new WebSocket("ws://localhost:1205/ws");
 
-    /**
-     * @type{PlayerState}
-     */
-    let playerState;
+    function gameLoop() {
+        /**
+         * @type{PlayerState}
+         */
+        let playerState;
 
-    socket.onmessage = (event) => {
-        playerState = JSON.parse(event.data);
-        renderGame(playerState, context, playerFrame);
-    };
+        socket.onmessage = (event) => {
+            playerState = JSON.parse(event.data);
+            renderGame(playerState, context, playerFrame);
+        };
 
-    /**
-     * @type {string}
-     */
-    let lastPressed;
-    window.addEventListener("keydown", (event) => {
-        if (lastPressed === event.key) {
-            return;
-        }
+        /**
+         * @type {string}
+         */
+        let lastPressed;
+        window.addEventListener("keydown", (event) => {
+            if (lastPressed === event.key) {
+                return;
+            }
 
-        lastPressed = event.key;
-        switch (event.key) {
-            case "w":
-                sendData("move", socket, "w");
-                break;
-            case "a":
-                sendData("move", socket, "a");
-                break;
-            case "s":
-                sendData("move", socket, "s");
-                break;
-            case "d":
-                sendData("move", socket, "d");
-                break;
-        }
-    });
+            lastPressed = event.key;
+            switch (event.key) {
+                case "w":
+                    break;
+                case "a":
+                    break;
+                case "s":
+                    break;
+                case "d":
+                    break;
+            }
+        });
 
-    window.addEventListener("keyup", () => {
-        lastPressed = "";
-        sendData("stop", socket, "");
-    });
+        window.addEventListener("keyup", () => {
+            lastPressed = "";
+            console.log("foo");
+        });
+        requestAnimationFrame(gameLoop);
+    }
+    requestAnimationFrame(gameLoop);
 }
 
 /**
@@ -80,18 +106,4 @@ function main(playerFrame) {
 function renderGame(playerState, context, playerFrame) {
     context.clearRect(0, 0, 1000, 500);
     context.drawImage(playerFrame.blueWalkRight[0], playerState.status.x, playerState.status.y);
-}
-
-/**
- * @param {string} actionType
- * @param {WebSocket} socket
- * @param {string} [key]
- */
-function sendData(actionType, socket, key) {
-    const action = {
-        type: actionType,
-        key: key,
-    };
-    console.log(action)
-    socket.send(JSON.stringify(action));
 }

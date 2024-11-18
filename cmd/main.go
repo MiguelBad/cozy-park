@@ -93,22 +93,6 @@ func handleAction(player *Player) {
 			log.Printf("error reading player action:\n%v\n", err)
 			return
 		}
-
-		switch data.Type {
-		case "move":
-			mu.Lock()
-			player.status.moving = true
-			mu.Unlock()
-			go handleMovement(player, data.Key)
-		case "stop":
-			mu.Lock()
-			player.status.moving = false
-			mu.Unlock()
-			// go handleMovement(player.status, data.Key)
-		default:
-		}
-
-		broadcast <- player
 	}
 }
 
@@ -125,7 +109,7 @@ func handleBroadcast() {
 				log.Printf("%v failed to update\n", err)
 				p.conn.Close()
 				mu.Lock()
-				delete(playerList, player)
+				delete(playerList, p)
 				mu.Unlock()
 			}
 
