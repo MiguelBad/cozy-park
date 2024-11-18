@@ -49,52 +49,65 @@ function main(playerFrame) {
     canvas.height = 700;
     canvas.width = 1200;
 
-    const context = canvas.getContext("2d");
-    if (!context) {
+    const intialCtx = canvas.getContext("2d");
+    if (!(intialCtx instanceof CanvasRenderingContext2D)) {
         throw new Error("failed to create canvas context");
     }
+    const canvasCtx = intialCtx;
 
     const socket = new WebSocket("ws://localhost:1205/ws");
 
-    function gameLoop() {
-        /**
-         * @type{PlayerState}
-         */
-        let playerState;
+    const fps = 12;
+    const interval = 1000 / fps;
+    let lastFrameTime = 0;
+    /**
+     * @param {number} timestamp
+     */
+    function gameLoop(timestamp) {
+        const elapsed = timestamp - lastFrameTime;
+        if (elapsed > interval) {
+            lastFrameTime = timestamp - (elapsed % interval);
 
-        socket.onmessage = (event) => {
-            playerState = JSON.parse(event.data);
-            renderGame(playerState, context, playerFrame);
-        };
+            /**
+             * @type{PlayerState}
+             */
+            let playerState;
 
-        /**
-         * @type {string}
-         */
-        let lastPressed;
-        window.addEventListener("keydown", (event) => {
-            if (lastPressed === event.key) {
-                return;
-            }
+            socket.onmessage = (event) => {
+                playerState = JSON.parse(event.data);
+                renderGame(playerState, canvasCtx, playerFrame);
+            };
 
-            lastPressed = event.key;
-            switch (event.key) {
-                case "w":
-                    break;
-                case "a":
-                    break;
-                case "s":
-                    break;
-                case "d":
-                    break;
-            }
-        });
+            /**
+             * @type {string}
+             */
+            let lastPressed;
+            window.addEventListener("keydown", (event) => {
+                if (lastPressed === event.key) {
+                    return;
+                }
 
-        window.addEventListener("keyup", () => {
-            lastPressed = "";
-            console.log("foo");
-        });
+                lastPressed = event.key;
+                switch (event.key) {
+                    case "w":
+                        break;
+                    case "a":
+                        break;
+                    case "s":
+                        break;
+                    case "d":
+                        break;
+                }
+            });
+
+            window.addEventListener("keyup", () => {
+                lastPressed = "";
+            });
+        }
+
         requestAnimationFrame(gameLoop);
     }
+
     requestAnimationFrame(gameLoop);
 }
 
