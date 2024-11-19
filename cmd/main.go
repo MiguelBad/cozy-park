@@ -34,11 +34,18 @@ type Status struct {
 }
 
 type ClientData struct {
-	Type string `json:"type"`
-	Key  string `json:"key"`
+	// Type string `json:"type"`
+	X int `json:"x"`
+	Y int `json:"y"`
 }
 
-type ClientPayload struct {
+type ClientInfoPayload struct {
+	Type string `json:"type"`
+	Id   string `json:"id"`
+}
+
+type PlayerStatePayload struct {
+	Type   string  `json:"type"`
 	Id     string  `json:"id"`
 	Status *Status `json:"status"`
 }
@@ -71,13 +78,15 @@ func handleConnections(w http.ResponseWriter, req *http.Request) {
 	mu.Unlock()
 	log.Printf("%v connected\n", player.id)
 
-	payload := &ClientPayload{Id: player.id, Status: player.status}
-	player.conn.WriteJSON(*payload)
+	playerStatePayload := &PlayerStatePayload{Type: "playerState", Id: player.id, Status: player.status}
+	clientInfoPayload := &ClientInfoPayload{Type: "clientInfo", Id: player.id}
+	player.conn.WriteJSON(*playerStatePayload)
+	player.conn.WriteJSON(*clientInfoPayload)
 
-	go handleAction(player)
+	go handleMessage(player)
 }
 
-func handleAction(player *Player) {
+func handleMessage(player *Player) {
 	defer func() {
 		player.conn.Close()
 		mu.Lock()
@@ -86,6 +95,16 @@ func handleAction(player *Player) {
 		log.Printf("%v disconnected.", player.id)
 	}()
 
+	broadcast <- player
+	for p := range playerList {
+		payload := &PlayerStatePayload{Type: "playerState", Id: p.id, Status: p.status}
+		err := player.conn.WriteJSON(*payload)
+
+		if err != nil {
+			log.Printf("Failed to update %v's status on %v\n", p.id, player.id)
+		}
+	}
+
 	for {
 		var data ClientData
 		err := player.conn.ReadJSON(&data)
@@ -93,6 +112,11 @@ func handleAction(player *Player) {
 			log.Printf("error reading player action:\n%v\n", err)
 			return
 		}
+
+		player.status.X = data.X
+		player.status.Y = data.Y
+
+		broadcast <- player
 	}
 }
 
@@ -102,8 +126,10 @@ func handleBroadcast() {
 		player := <-broadcast
 
 		for p := range playerList {
-			payload := &ClientPayload{Id: player.id, Status: player.status}
+			payload := &PlayerStatePayload{Type: "playerState", Id: player.id, Status: player.status}
 			err := p.conn.WriteJSON(*payload)
+
+			log.Println(p.id, p.status)
 
 			if err != nil {
 				log.Printf("%v failed to update\n", err)
