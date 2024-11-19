@@ -58,29 +58,7 @@ function main(playerFrame) {
             return;
         }
 
-        console.log(userId);
         lastPressed = event.key;
-
-        const pos = {
-            x: playerState[userId].x,
-            y: playerState[userId].y,
-        };
-        switch (event.key) {
-            case "w":
-                pos.y += 10;
-                break;
-            case "a":
-                pos.x -= 10;
-                break;
-            case "s":
-                pos.y += 10;
-                break;
-            case "d":
-                pos.x += 10;
-                break;
-        }
-
-        socket.send(JSON.stringify(pos));
     });
 
     window.addEventListener("keyup", () => {
@@ -96,6 +74,27 @@ function main(playerFrame) {
     function gameLoop(timestamp) {
         const elapsed = timestamp - lastFrameTime;
         if (elapsed > interval) {
+            const pos = {
+                x: playerState[userId].x,
+                y: playerState[userId].y,
+            };
+
+            switch (lastPressed) {
+                case "w":
+                    pos.y -= 10;
+                    break;
+                case "a":
+                    pos.x -= 10;
+                    break;
+                case "s":
+                    pos.y += 10;
+                    break;
+                case "d":
+                    pos.x += 10;
+                    break;
+            }
+            socket.send(JSON.stringify(pos));
+
             lastFrameTime = timestamp - (elapsed % interval);
             renderGame(playerState, canvasCtx, playerFrame);
         }
