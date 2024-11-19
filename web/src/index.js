@@ -50,19 +50,25 @@ function main(playerFrame) {
     };
 
     /**
-     * @type {string}
+     * @type {Object<string, boolean>}
      */
-    let lastPressed;
+    let keys = {
+        w: false,
+        a: false,
+        s: false,
+        d: false,
+    };
     window.addEventListener("keydown", (event) => {
-        if (lastPressed === event.key) {
+        if (keys[event.key]) {
             return;
         }
+        console.log(event.key);
 
-        lastPressed = event.key;
+        keys[event.key] = true;
     });
 
-    window.addEventListener("keyup", () => {
-        lastPressed = "";
+    window.addEventListener("keyup", (event) => {
+        keys[event.key] = false;
     });
 
     const fps = 12;
@@ -73,25 +79,25 @@ function main(playerFrame) {
      */
     function gameLoop(timestamp) {
         const elapsed = timestamp - lastFrameTime;
+        const pos = {
+            x: playerState[userId].x,
+            y: playerState[userId].y,
+        };
         if (elapsed > interval) {
-            const pos = {
-                x: playerState[userId].x,
-                y: playerState[userId].y,
-            };
+            if (keys.w) {
+                pos.y -= 10;
+            }
 
-            switch (lastPressed) {
-                case "w":
-                    pos.y -= 10;
-                    break;
-                case "a":
-                    pos.x -= 10;
-                    break;
-                case "s":
-                    pos.y += 10;
-                    break;
-                case "d":
-                    pos.x += 10;
-                    break;
+            if (keys.a) {
+                pos.x -= 10;
+            }
+
+            if (keys.s) {
+                pos.y += 10;
+            }
+
+            if (keys.d) {
+                pos.x += 10;
             }
             socket.send(JSON.stringify(pos));
 
@@ -116,29 +122,3 @@ function renderGame(playerState, context, playerFrame) {
         context.drawImage(playerFrame.blueWalkRight[0], state.x, state.y);
     }
 }
-
-// class handleMovement {
-//     /**
-//      * @param {number} x
-//      * @param {number} y
-//      */
-//     constructor(x, y) {
-//         this.x = x;
-//         this.y = y;
-//         this.moving = false;
-//     }
-//
-//     /**
-//      * @param {number} end
-//      * @param {number} alpha
-//      * @returns {{x: number, y: number}}
-//      */
-//     interpolate(end, alpha) {
-//         return {
-//             x: this.x + (this.x - end) * alpha,
-//             y: this.y + (this.y - end) * alpha,
-//         };
-//     }
-//
-//     extrapolate() {}
-// }
