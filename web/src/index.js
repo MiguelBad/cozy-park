@@ -20,8 +20,9 @@ function main(playerFrame) {
         throw new Error("cannot find game canvas");
     }
     const canvas = initialCanvas;
-    let clientHeight = window.innerHeight;
-    let clientWidth = window.innerWidth;
+    const aspectRatio = 1920 / 1080;
+    let clientHeight = window.innerHeight - 20;
+    let clientWidth = clientHeight * aspectRatio;
     if (clientHeight > 1080) {
         clientHeight = 1080;
     }
@@ -80,8 +81,10 @@ function main(playerFrame) {
         keys[event.key] = false;
     });
 
-    const fps = 12;
+    const fps = 24;
     const interval = 1000 / fps;
+    const walkingInterval = interval / 3;
+    let currFrameIdx = 0;
     let lastFrameTime = 0;
     /**
      * @param {number} timestamp
@@ -129,12 +132,25 @@ function main(playerFrame) {
             socket.send(JSON.stringify(pos));
 
             lastFrameTime = timestamp - (elapsed % interval);
-            // console.log(playerState)
-            renderGame(playerState, canvas, canvasCtx, playerFrame);
+            const walking = Object.keys(keys).some((key) => keys[key]);
+            if (walking) {
+                currFrameIdx += 1;
+                if (currFrameIdx > 2) {
+                    currFrameIdx = 0;
+                }
+
+                if (keys.a && keys.d && !(keys.w || keys.s)) {
+                    currFrameIdx = 0;
+                }
+
+                renderGame(playerState, canvas, canvasCtx, playerFrame, currFrameIdx);
+            } else {
+                currFrameIdx = 0;
+                renderGame(playerState, canvas, canvasCtx, playerFrame, currFrameIdx);
+            }
         }
         requestAnimationFrame(gameLoop);
     }
-
     requestAnimationFrame(gameLoop);
 }
 
@@ -143,14 +159,9 @@ function main(playerFrame) {
  * @param {HTMLCanvasElement} canvas
  * @param {CanvasRenderingContext2D} context
  * @param {PlayerFrame} playerFrame
+ * @param {number} currFrameIdx
  */
-function renderGame(playerState, canvas, context, playerFrame) {
-    // console.log(playerState);
-    // console.log(userId);
-    // console.log(playerState[userId]);
-    if (!playerState[userId]) {
-        return;
-    }
+function renderGame(playerState, canvas, context, playerFrame, currFrameIdx) {
     context.clearRect(0, 0, canvas.width, canvas.height);
     for (const player in playerState) {
         const state = playerState[player];
@@ -159,6 +170,6 @@ function renderGame(playerState, canvas, context, playerFrame) {
         if (playerState[userId].facing === "left") {
             walkingFrame = playerFrame.blueWalkLeft;
         }
-        context.drawImage(walkingFrame[0], state.x, state.y);
+        context.drawImage(walkingFrame[currFrameIdx], state.x, state.y);
     }
 }
