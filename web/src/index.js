@@ -1,15 +1,48 @@
 /**
  * @typedef {{ blueWalkLeft: HTMLImageElement[]; blueWalkRight: HTMLImageElement[]; pinkWalkLeft: HTMLImageElement[]; pinkWalkRight: HTMLImageElement[]; }} PlayerFrame
- * @typedef {{ action: string, target: string, x: number, y: number, frame: number, changeFrame: boolean, facing: string}} State
+ * @typedef {{ color: string, action: string, target: string, x: number, y: number, frame: number, changeFrame: boolean, facing: string}} State
  * @typedef { Object<string, State>} PlayerState
  */
 
-var userId = "";
+let userId = "";
+let color = "";
 
 document.addEventListener("DOMContentLoaded", async function() {
     const playerFrame = await fetchPlayerFrames();
-    main(playerFrame);
+    playerSelect(playerFrame);
 });
+
+/**
+ * @param {PlayerFrame} playerFrame
+ */
+function playerSelect(playerFrame) {
+    const playerSelectMenu = document.getElementById("player-select--container");
+    if (!(playerSelectMenu instanceof HTMLDivElement)) {
+        throw new Error("did not found player select menu");
+    }
+    const blueOption = document.getElementById("player-select--blue");
+    if (!(blueOption instanceof HTMLDivElement)) {
+        throw new Error("did not found blue option");
+    }
+    const pinkOption = document.getElementById("player-select--pink");
+    if (!(pinkOption instanceof HTMLDivElement)) {
+        throw new Error("did not found pink option");
+    }
+
+    blueOption.addEventListener("click", () => {
+        playerSelectMenu.style.display = "none";
+        playerSelectMenu.hidden = true;
+        color = "blue";
+        main(playerFrame);
+    });
+
+    pinkOption.addEventListener("click", () => {
+        playerSelectMenu.style.display = "none";
+        playerSelectMenu.hidden = true;
+        color = "pink";
+        main(playerFrame);
+    });
+}
 
 /**
  * @param {PlayerFrame} playerFrame
@@ -20,6 +53,7 @@ function main(playerFrame) {
         throw new Error("cannot find game canvas");
     }
     const canvas = initialCanvas;
+    canvas.hidden = false;
     const aspectRatio = 1920 / 1080;
     let clientHeight = window.innerHeight - 20;
     let clientWidth = clientHeight * aspectRatio;
@@ -89,7 +123,7 @@ function main(playerFrame) {
     function gameLoop(timestamp) {
         const elapsed = timestamp - lastFrameTime;
 
-        if (!userId || !playerState) {
+        if (!userId || !playerState || !color) {
             canvasCtx.font = "50px Arial";
             canvasCtx.fillText("Loading...", canvas.width / 2, canvas.height / 2);
             requestAnimationFrame(gameLoop);
@@ -167,9 +201,15 @@ function renderGame(playerState, canvas, context, playerFrame) {
     for (const player in playerState) {
         const state = playerState[player];
 
-        let walkingFrame = playerFrame.blueWalkRight;
+        let walkingFrame = playerFrame.pinkWalkRight;
+        if (color === "blue") {
+            walkingFrame = playerFrame.blueWalkRight;
+        }
         if (playerState[player].facing === "left") {
-            walkingFrame = playerFrame.blueWalkLeft;
+            walkingFrame = playerFrame.pinkWalkLeft;
+            if (color === "blue") {
+                walkingFrame = playerFrame.blueWalkLeft;
+            }
         }
         context.drawImage(walkingFrame[state.frame], state.x, state.y);
     }

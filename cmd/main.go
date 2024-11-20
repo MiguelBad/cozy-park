@@ -27,6 +27,7 @@ type Player struct {
 }
 
 type State struct {
+	Color       string `json:"color"`
 	Action      string `json:"action"`
 	Target      string `json:"target"`
 	X           int    `json:"x"`
@@ -37,11 +38,12 @@ type State struct {
 }
 
 type StateMessage struct {
-	Type string    `json:"type"`
-	Data *Position `json:"data"`
+	Type string   `json:"type"`
+	Data *Message `json:"data"`
 }
 
-type Position struct {
+type Message struct {
+	Color       string `json:"color"`
 	X           int    `json:"x"`
 	Y           int    `json:"y"`
 	Facing      string `json:"facing"`
@@ -129,6 +131,9 @@ func handleMessage(player *Player) {
 			return
 		}
 
+		if message.Data.Color != "" {
+			player.state.Color = message.Data.Color
+		}
 		player.state.X = message.Data.X
 		player.state.Y = message.Data.Y
 		player.state.Facing = message.Data.Facing
