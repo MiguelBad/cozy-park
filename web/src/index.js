@@ -194,7 +194,7 @@ function main(playerFrame) {
             if (xTranslate > 300) {
                 xTranslate = 300;
             } else if (xTranslate < -800) {
-                xTranslate = 800;
+                xTranslate = -800;
             }
             if (yTranslate > 100) {
                 yTranslate = 100;
