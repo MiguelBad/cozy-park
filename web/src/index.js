@@ -215,7 +215,10 @@ function main(playerFrame) {
                 if (data.frame > 2) {
                     data.frame = 0;
                 }
-                if (keys.a && keys.d && !(keys.w || keys.s)) {
+                if (
+                    (keys.a && keys.d && !(keys.w || keys.s)) ||
+                    (keys.w && keys.s && !(keys.a || keys.d))
+                ) {
                     data.frame = 0;
                 }
                 renderGame(playerState, canvas, canvasCtx, playerFrame);
