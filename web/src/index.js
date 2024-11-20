@@ -6,6 +6,10 @@
 
 let userId = "";
 let color = "";
+const startingPos = {
+    x: 1250,
+    y: 750,
+};
 
 document.addEventListener("DOMContentLoaded", async function() {
     const playerFrame = await fetchPlayerFrames();
@@ -48,23 +52,36 @@ function playerSelect(playerFrame) {
  * @param {PlayerFrame} playerFrame
  */
 function main(playerFrame) {
+    const canvasContainer = document.getElementById("game-canvas--container");
+    if (!(canvasContainer instanceof HTMLDivElement)) {
+        throw new Error("cannot find game canvas container");
+    }
     const initialCanvas = document.getElementById("game-canvas");
     if (!(initialCanvas instanceof HTMLCanvasElement)) {
         throw new Error("cannot find game canvas");
     }
     const canvas = initialCanvas;
     canvas.hidden = false;
-    const aspectRatio = 1920 / 1080;
+    const aspectRatio = 16 / 9;
+
+    canvas.width = 2500;
+    canvas.height = 1500;
     let clientHeight = window.innerHeight - 20;
     let clientWidth = clientHeight * aspectRatio;
     if (clientHeight > 1080) {
         clientHeight = 1080;
     }
+    if (clientHeight > canvas.height) {
+        clientHeight = canvas.height;
+    }
     if (clientWidth > 1920) {
         clientWidth = 1920;
     }
-    canvas.height = clientHeight;
-    canvas.width = clientWidth;
+    if (clientWidth > canvas.width) {
+        clientWidth = canvas.width;
+    }
+    canvasContainer.style.height = `${clientHeight}px`;
+    canvasContainer.style.width = `${clientWidth}px`;
 
     const intialCtx = canvas.getContext("2d");
     if (!(intialCtx instanceof CanvasRenderingContext2D)) {
@@ -75,7 +92,9 @@ function main(playerFrame) {
     const socket = new WebSocket("ws://192.168.1.113:1205/ws");
 
     socket.onopen = () => {
-        socket.send(JSON.stringify({ type: "", data: { color: color } }));
+        socket.send(
+            JSON.stringify({ type: "", data: { x: startingPos.x, y: startingPos.y, color: color } })
+        );
     };
 
     /**
@@ -143,8 +162,12 @@ function main(playerFrame) {
         };
 
         if (elapsed > interval) {
-            const playerHeight = playerFrame.blueWalkLeft[data.frame].height;
-            const playerWidth = playerFrame.blueWalkLeft[data.frame].width;
+            let playerHeight = playerFrame.blueWalkLeft[data.frame].height;
+            let playerWidth = playerFrame.blueWalkLeft[data.frame].width;
+            if (color === "pink") {
+                playerHeight = playerFrame.pinkWalkLeft[data.frame].height;
+                playerWidth = playerFrame.pinkWalkLeft[data.frame].width;
+            }
 
             if (keys.w && data.y > 0) {
                 data.y -= 10;
@@ -165,6 +188,20 @@ function main(playerFrame) {
                     data.facing = "right";
                 }
             }
+
+            let xTranslate = clientWidth / 2 - playerWidth / 2 - data.x;
+            let yTranslate = clientHeight / 2 - playerHeight / 2 - data.y;
+            if (xTranslate > 300) {
+                xTranslate = 300;
+            } else if (xTranslate < -800) {
+                xTranslate = 800;
+            }
+            if (yTranslate > 100) {
+                yTranslate = 100;
+            } else if (yTranslate < -500) {
+                yTranslate = -500;
+            }
+            canvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
 
             lastFrameTime = timestamp - (elapsed % interval);
             const walking = movementKeys.some((key) => keys[key]);
@@ -202,7 +239,11 @@ function main(playerFrame) {
  */
 function renderGame(playerState, canvas, context, playerFrame) {
     context.clearRect(0, 0, canvas.width, canvas.height);
-    for (const player in playerState) {
+
+    /**
+     * @param {string} player
+     */
+    function renderPlayer(player) {
         const state = playerState[player];
 
         let walkingFrame = playerFrame.pinkWalkRight;
@@ -217,4 +258,13 @@ function renderGame(playerState, canvas, context, playerFrame) {
         }
         context.drawImage(walkingFrame[state.frame], state.x, state.y);
     }
+
+    for (const player in playerState) {
+        if (player === userId) {
+            continue;
+        }
+        renderPlayer(player);
+    }
+
+    renderPlayer(userId);
 }

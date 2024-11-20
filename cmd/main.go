@@ -8,6 +8,9 @@ import (
 	"sync"
 )
 
+const XCenter = 1250
+const YCenter = 750
+
 var (
 	upgrader = websocket.Upgrader{
 		CheckOrigin: func(req *http.Request) bool { return true },
@@ -71,9 +74,14 @@ func main() {
 
 func newPlayer(conn *websocket.Conn) *Player {
 	return &Player{
-		conn:  conn,
-		id:    fmt.Sprintf("player_%d", len(playerList)+1),
-		state: &State{Action: "idle", Facing: "right"},
+		conn: conn,
+		id:   fmt.Sprintf("player_%d", len(playerList)+1),
+		state: &State{
+			Action: "idle",
+			X:      XCenter,
+			Y:      YCenter,
+			Facing: "right",
+		},
 	}
 }
 
