@@ -62,26 +62,40 @@ function main(playerFrame) {
     }
     const canvas = initialCanvas;
     canvas.hidden = false;
-    const aspectRatio = 16 / 9;
-
     canvas.width = 2500;
     canvas.height = 1500;
-    let clientHeight = window.innerHeight - 20;
-    let clientWidth = clientHeight * aspectRatio;
-    if (clientHeight > 1080) {
-        clientHeight = 1080;
+
+    let clientWidth = window.innerWidth - 20;
+    const aspectRatio = 16 / 9;
+    let clientHeight = clientWidth * aspectRatio;
+    /**
+     * @param {HTMLDivElement} canvasContainer
+     */
+    function clientDimension(canvasContainer) {
+        clientWidth = window.innerWidth - 20;
+        clientHeight = clientWidth * aspectRatio;
+        if (clientHeight > 1080) {
+            clientHeight = 1080;
+        }
+        if (clientHeight > canvas.height) {
+            clientHeight = canvas.height;
+        }
+        if (clientWidth > 1920) {
+            clientWidth = 1920;
+        }
+        if (clientWidth > canvas.width) {
+            clientWidth = canvas.width;
+        }
+        canvasContainer.style.height = `${clientHeight}px`;
+        canvasContainer.style.width = `${clientWidth}px`;
     }
-    if (clientHeight > canvas.height) {
-        clientHeight = canvas.height;
-    }
-    if (clientWidth > 1920) {
-        clientWidth = 1920;
-    }
-    if (clientWidth > canvas.width) {
-        clientWidth = canvas.width;
-    }
-    canvasContainer.style.height = `${clientHeight}px`;
-    canvasContainer.style.width = `${clientWidth}px`;
+    window.addEventListener("resize", () => {
+        console.log(window.innerHeight);
+        clientDimension(canvasContainer);
+        console.log("changed");
+        console.log(window.innerHeight);
+    });
+    clientDimension(canvasContainer);
 
     const intialCtx = canvas.getContext("2d");
     if (!(intialCtx instanceof CanvasRenderingContext2D)) {
