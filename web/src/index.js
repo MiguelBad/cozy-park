@@ -74,6 +74,10 @@ function main(playerFrame) {
 
     const socket = new WebSocket("ws://192.168.1.113:1205/ws");
 
+    socket.onopen = () => {
+        socket.send(JSON.stringify({ type: "", data: { color: color } }));
+    };
+
     /**
      * @type {PlayerState}
      */
@@ -202,12 +206,12 @@ function renderGame(playerState, canvas, context, playerFrame) {
         const state = playerState[player];
 
         let walkingFrame = playerFrame.pinkWalkRight;
-        if (color === "blue") {
+        if (playerState[player].color === "blue") {
             walkingFrame = playerFrame.blueWalkRight;
         }
         if (playerState[player].facing === "left") {
             walkingFrame = playerFrame.pinkWalkLeft;
-            if (color === "blue") {
+            if (playerState[player].color === "blue") {
                 walkingFrame = playerFrame.blueWalkLeft;
             }
         }
