@@ -1,12 +1,12 @@
 /**
  * @typedef {{ blueWalkLeft: HTMLImageElement[]; blueWalkRight: HTMLImageElement[]; pinkWalkLeft: HTMLImageElement[]; pinkWalkRight: HTMLImageElement[]; }} PlayerFrame
- * @typedef {{ action: string, target: string, x: number, y: number, frame: number, direction: string}} Status
- * @typedef { Object<string, Status>} PlayerState
+ * @typedef {{ action: string, target: string, x: number, y: number, frame: number, facing: string}} State
+ * @typedef { Object<string, State>} PlayerState
  */
 
 var userId = "";
 
-document.addEventListener("DOMContentLoaded", async function () {
+document.addEventListener("DOMContentLoaded", async function() {
     const playerFrame = await fetchPlayerFrames();
     main(playerFrame);
 });
@@ -15,15 +15,23 @@ document.addEventListener("DOMContentLoaded", async function () {
  * @param {PlayerFrame} playerFrame
  */
 function main(playerFrame) {
-    /**
-     * @type {HTMLCanvasElement|HTMLElement|null}
-     */
-    const canvas = document.getElementById("gameCanvas");
-    if (!(canvas instanceof HTMLCanvasElement)) {
-        throw new Error("gameCanvas is not an HTMLCanvasElement");
+    const initialCanvas = document.getElementById("game-canvas");
+    if (!(initialCanvas instanceof HTMLCanvasElement)) {
+        throw new Error("cannot find game canvas");
     }
-    canvas.height = 700;
-    canvas.width = 1200;
+    const canvas = initialCanvas;
+    let clientHeight = window.innerHeight;
+    let clientWidth = window.innerWidth;
+    if (clientHeight > 1080) {
+        clientHeight = 1080;
+    }
+
+    if (clientWidth > 1920) {
+        clientWidth = 1920;
+    }
+
+    canvas.height = clientHeight;
+    canvas.width = clientWidth;
 
     const intialCtx = canvas.getContext("2d");
     if (!(intialCtx instanceof CanvasRenderingContext2D)) {
@@ -31,7 +39,7 @@ function main(playerFrame) {
     }
     const canvasCtx = intialCtx;
 
-    const socket = new WebSocket("ws://localhost:1205/ws");
+    const socket = new WebSocket("ws://192.168.1.113:1205/ws");
 
     /**
      * @type {PlayerState}
@@ -41,10 +49,14 @@ function main(playerFrame) {
         const serverMessage = JSON.parse(event.data);
         switch (serverMessage.type) {
             case "playerState":
-                playerState[serverMessage.id] = serverMessage.status;
+                playerState[serverMessage.id] = serverMessage.state;
                 break;
-            case "clientInfo":
+            case "connected":
                 userId = serverMessage.id;
+                break;
+            case "disconnected":
+                const disconnectedP = serverMessage.id;
+                delete playerState[disconnectedP];
                 break;
         }
     };
@@ -62,11 +74,8 @@ function main(playerFrame) {
         if (keys[event.key]) {
             return;
         }
-        console.log(event.key);
-
         keys[event.key] = true;
     });
-
     window.addEventListener("keyup", (event) => {
         keys[event.key] = false;
     });
@@ -79,9 +88,18 @@ function main(playerFrame) {
      */
     function gameLoop(timestamp) {
         const elapsed = timestamp - lastFrameTime;
+
+        if (!userId || !playerState) {
+            canvasCtx.font = "50px Arial";
+            canvasCtx.fillText("Loading...", canvas.width / 2, canvas.height / 2);
+            requestAnimationFrame(gameLoop);
+            return;
+        }
+
         const pos = {
             x: playerState[userId].x,
             y: playerState[userId].y,
+            facing: playerState[userId].facing,
         };
         if (elapsed > interval) {
             if (keys.w) {
@@ -99,10 +117,20 @@ function main(playerFrame) {
             if (keys.d) {
                 pos.x += 10;
             }
+
+            if (!(keys.a && keys.d)) {
+                if (keys.a) {
+                    pos.facing = "left";
+                } else if (keys.d) {
+                    pos.facing = "right";
+                }
+            }
+
             socket.send(JSON.stringify(pos));
 
             lastFrameTime = timestamp - (elapsed % interval);
-            renderGame(playerState, canvasCtx, playerFrame);
+            // console.log(playerState)
+            renderGame(playerState, canvas, canvasCtx, playerFrame);
         }
         requestAnimationFrame(gameLoop);
     }
@@ -112,13 +140,25 @@ function main(playerFrame) {
 
 /**
  * @param {PlayerState} playerState
+ * @param {HTMLCanvasElement} canvas
  * @param {CanvasRenderingContext2D} context
  * @param {PlayerFrame} playerFrame
  */
-function renderGame(playerState, context, playerFrame) {
-    context.clearRect(0, 0, 1000, 500);
+function renderGame(playerState, canvas, context, playerFrame) {
+    // console.log(playerState);
+    // console.log(userId);
+    // console.log(playerState[userId]);
+    if (!playerState[userId]) {
+        return;
+    }
+    context.clearRect(0, 0, canvas.width, canvas.height);
     for (const player in playerState) {
         const state = playerState[player];
-        context.drawImage(playerFrame.blueWalkRight[0], state.x, state.y);
+
+        let walkingFrame = playerFrame.blueWalkRight;
+        if (playerState[userId].facing === "left") {
+            walkingFrame = playerFrame.blueWalkLeft;
+        }
+        context.drawImage(walkingFrame[0], state.x, state.y);
     }
 }
