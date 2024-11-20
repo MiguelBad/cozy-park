@@ -26,11 +26,9 @@ function main(playerFrame) {
     if (clientHeight > 1080) {
         clientHeight = 1080;
     }
-
     if (clientWidth > 1920) {
         clientWidth = 1920;
     }
-
     canvas.height = clientHeight;
     canvas.width = clientWidth;
 
@@ -65,26 +63,27 @@ function main(playerFrame) {
     /**
      * @type {Object<string, boolean>}
      */
-    let keys = {
-        w: false,
-        a: false,
-        s: false,
-        d: false,
-    };
-    window.addEventListener("keydown", (event) => {
+    let keys = {};
+    const movementKeys = ["w", "a", "s", "d"];
+    document.addEventListener("keydown", (event) => {
         if (keys[event.key]) {
             return;
         }
         keys[event.key] = true;
     });
-    window.addEventListener("keyup", (event) => {
+    document.addEventListener("keyup", (event) => {
         keys[event.key] = false;
     });
+    window.addEventListener("blur", () => {
+        for (const key in keys) {
+            keys[key] = false;
+        }
+    });
 
-    const fps = 24;
+    const fps = 20;
     const interval = 1000 / fps;
-    const walkingInterval = interval / 3;
     let currFrameIdx = 0;
+    let changedFrame = false;
     let lastFrameTime = 0;
     /**
      * @param {number} timestamp
@@ -104,23 +103,23 @@ function main(playerFrame) {
             y: playerState[userId].y,
             facing: playerState[userId].facing,
         };
+
         if (elapsed > interval) {
-            if (keys.w) {
+            const playerHeight = playerFrame.blueWalkLeft[currFrameIdx].height;
+            const playerWidth = playerFrame.blueWalkLeft[currFrameIdx].width;
+
+            if (keys.w && pos.y > 0) {
                 pos.y -= 10;
             }
-
-            if (keys.a) {
+            if (keys.a && pos.x > 0) {
                 pos.x -= 10;
             }
-
-            if (keys.s) {
+            if (keys.s && pos.y + playerHeight < canvas.height) {
                 pos.y += 10;
             }
-
-            if (keys.d) {
+            if (keys.d && pos.x + playerWidth + 10 < canvas.width) {
                 pos.x += 10;
             }
-
             if (!(keys.a && keys.d)) {
                 if (keys.a) {
                     pos.facing = "left";
@@ -132,17 +131,20 @@ function main(playerFrame) {
             socket.send(JSON.stringify(pos));
 
             lastFrameTime = timestamp - (elapsed % interval);
-            const walking = Object.keys(keys).some((key) => keys[key]);
+            const walking = movementKeys.some((key) => keys[key]);
             if (walking) {
-                currFrameIdx += 1;
+                if (!changedFrame) {
+                    currFrameIdx += 1;
+                    changedFrame = true;
+                } else {
+                    changedFrame = false;
+                }
                 if (currFrameIdx > 2) {
                     currFrameIdx = 0;
                 }
-
                 if (keys.a && keys.d && !(keys.w || keys.s)) {
                     currFrameIdx = 0;
                 }
-
                 renderGame(playerState, canvas, canvasCtx, playerFrame, currFrameIdx);
             } else {
                 currFrameIdx = 0;

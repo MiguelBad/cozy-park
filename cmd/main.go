@@ -137,6 +137,7 @@ func handleMoveBroadcast() {
 
 		for p := range playerList {
 			payload := &PlayerStatePayload{Type: "playerState", Id: player.id, State: player.state}
+			log.Println(payload.Type, payload.Id, payload.State)
 			err := p.conn.WriteJSON(*payload)
 
 			if err != nil {
