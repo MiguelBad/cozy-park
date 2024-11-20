@@ -27,19 +27,26 @@ type Player struct {
 }
 
 type State struct {
-	Action string `json:"action"`
-	Target string `json:"target"`
-	X      int    `json:"x"`
-	Y      int    `json:"y"`
-	Frame  int    `json:"frame"`
-	Facing string `json:"facing"`
-	moving bool
+	Action      string `json:"action"`
+	Target      string `json:"target"`
+	X           int    `json:"x"`
+	Y           int    `json:"y"`
+	Frame       int    `json:"frame"`
+	ChangeFrame bool   `json:"changeFrame"`
+	Facing      string `json:"facing"`
 }
 
 type StateMessage struct {
-	X      int    `json:"x"`
-	Y      int    `json:"y"`
-	Facing string `json:"facing"`
+	Type string    `json:"type"`
+	Data *Position `json:"data"`
+}
+
+type Position struct {
+	X           int    `json:"x"`
+	Y           int    `json:"y"`
+	Facing      string `json:"facing"`
+	Frame       int    `json:"frame"`
+	ChangeFrame bool   `json:"changeFrame"`
 }
 
 type ClientConnectionPayload struct {
@@ -115,16 +122,19 @@ func handleMessage(player *Player) {
 	}
 
 	for {
-		var data StateMessage
-		err := player.conn.ReadJSON(&data)
+		var message StateMessage
+		err := player.conn.ReadJSON(&message)
 		if err != nil {
 			log.Printf("error reading player action:\n%v\n", err)
 			return
 		}
 
-		player.state.X = data.X
-		player.state.Y = data.Y
-		player.state.Facing = data.Facing
+		player.state.X = message.Data.X
+		player.state.Y = message.Data.Y
+		player.state.Facing = message.Data.Facing
+		player.state.Frame = message.Data.Frame
+		player.state.ChangeFrame = message.Data.ChangeFrame
+		player.state.Action = message.Type
 
 		playerStateBroadcast <- player
 	}

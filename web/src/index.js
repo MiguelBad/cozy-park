@@ -1,6 +1,6 @@
 /**
  * @typedef {{ blueWalkLeft: HTMLImageElement[]; blueWalkRight: HTMLImageElement[]; pinkWalkLeft: HTMLImageElement[]; pinkWalkRight: HTMLImageElement[]; }} PlayerFrame
- * @typedef {{ action: string, target: string, x: number, y: number, frame: number, facing: string}} State
+ * @typedef {{ action: string, target: string, x: number, y: number, frame: number, changeFrame: boolean, facing: string}} State
  * @typedef { Object<string, State>} PlayerState
  */
 
@@ -82,8 +82,6 @@ function main(playerFrame) {
 
     const fps = 20;
     const interval = 1000 / fps;
-    let currFrameIdx = 0;
-    let changedFrame = false;
     let lastFrameTime = 0;
     /**
      * @param {number} timestamp
@@ -98,58 +96,60 @@ function main(playerFrame) {
             return;
         }
 
-        const pos = {
+        const data = {
             x: playerState[userId].x,
             y: playerState[userId].y,
             facing: playerState[userId].facing,
+            frame: playerState[userId].frame,
+            changeFrame: playerState[userId].changeFrame,
         };
 
         if (elapsed > interval) {
-            const playerHeight = playerFrame.blueWalkLeft[currFrameIdx].height;
-            const playerWidth = playerFrame.blueWalkLeft[currFrameIdx].width;
+            const playerHeight = playerFrame.blueWalkLeft[data.frame].height;
+            const playerWidth = playerFrame.blueWalkLeft[data.frame].width;
 
-            if (keys.w && pos.y > 0) {
-                pos.y -= 10;
+            if (keys.w && data.y > 0) {
+                data.y -= 10;
             }
-            if (keys.a && pos.x > 0) {
-                pos.x -= 10;
+            if (keys.a && data.x > 0) {
+                data.x -= 10;
             }
-            if (keys.s && pos.y + playerHeight < canvas.height) {
-                pos.y += 10;
+            if (keys.s && data.y + playerHeight < canvas.height) {
+                data.y += 10;
             }
-            if (keys.d && pos.x + playerWidth + 10 < canvas.width) {
-                pos.x += 10;
+            if (keys.d && data.x + playerWidth + 10 < canvas.width) {
+                data.x += 10;
             }
             if (!(keys.a && keys.d)) {
                 if (keys.a) {
-                    pos.facing = "left";
+                    data.facing = "left";
                 } else if (keys.d) {
-                    pos.facing = "right";
+                    data.facing = "right";
                 }
             }
-
-            socket.send(JSON.stringify(pos));
 
             lastFrameTime = timestamp - (elapsed % interval);
             const walking = movementKeys.some((key) => keys[key]);
             if (walking) {
-                if (!changedFrame) {
-                    currFrameIdx += 1;
-                    changedFrame = true;
+                if (data.changeFrame) {
+                    data.frame += 1;
+                    data.changeFrame = false;
                 } else {
-                    changedFrame = false;
+                    data.changeFrame = true;
                 }
-                if (currFrameIdx > 2) {
-                    currFrameIdx = 0;
+                if (data.frame > 2) {
+                    data.frame = 0;
                 }
                 if (keys.a && keys.d && !(keys.w || keys.s)) {
-                    currFrameIdx = 0;
+                    data.frame = 0;
                 }
-                renderGame(playerState, canvas, canvasCtx, playerFrame, currFrameIdx);
+                renderGame(playerState, canvas, canvasCtx, playerFrame);
             } else {
-                currFrameIdx = 0;
-                renderGame(playerState, canvas, canvasCtx, playerFrame, currFrameIdx);
+                data.frame = 0;
+                renderGame(playerState, canvas, canvasCtx, playerFrame);
             }
+
+            socket.send(JSON.stringify({ type: "move", data: data }));
         }
         requestAnimationFrame(gameLoop);
     }
@@ -161,17 +161,16 @@ function main(playerFrame) {
  * @param {HTMLCanvasElement} canvas
  * @param {CanvasRenderingContext2D} context
  * @param {PlayerFrame} playerFrame
- * @param {number} currFrameIdx
  */
-function renderGame(playerState, canvas, context, playerFrame, currFrameIdx) {
+function renderGame(playerState, canvas, context, playerFrame) {
     context.clearRect(0, 0, canvas.width, canvas.height);
     for (const player in playerState) {
         const state = playerState[player];
 
         let walkingFrame = playerFrame.blueWalkRight;
-        if (playerState[userId].facing === "left") {
+        if (playerState[player].facing === "left") {
             walkingFrame = playerFrame.blueWalkLeft;
         }
-        context.drawImage(walkingFrame[currFrameIdx], state.x, state.y);
+        context.drawImage(walkingFrame[state.frame], state.x, state.y);
     }
 }
