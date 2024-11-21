@@ -8,7 +8,7 @@ body {
     height: 100vh;
     justify-content: center;
     align-items: center;
-    background-color: black;
+    background-color: #1e1e1e;
 }
 
 #player-select--container {
@@ -47,10 +47,11 @@ body {
 }
 
 #game-canvas {
-    border: 1px solid black;
-    background-color: white;
+    background-image: url(/web/assets/bg/canvas-bg.png);
+    background-size: cover;
 }
 
-#game-canvas--container{
+#game-canvas--container {
     overflow: hidden;
+    border-radius: 20px;
 }

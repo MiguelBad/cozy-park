@@ -11,7 +11,7 @@ const startingPos = {
     y: 750,
 };
 
-document.addEventListener("DOMContentLoaded", async function() {
+document.addEventListener("DOMContentLoaded", async function () {
     const playerFrame = await fetchPlayerFrames();
     playerSelect(playerFrame);
 });
@@ -66,7 +66,7 @@ function main(playerFrame) {
     canvas.height = 1500;
 
     let clientWidth = window.innerWidth - 20;
-    const aspectRatio = 16 / 9;
+    const aspectRatio = 9 / 16;
     let clientHeight = clientWidth * aspectRatio;
     /**
      * @param {HTMLDivElement} canvasContainer
@@ -74,6 +74,7 @@ function main(playerFrame) {
     function clientDimension(canvasContainer) {
         clientWidth = window.innerWidth - 20;
         clientHeight = clientWidth * aspectRatio;
+        console.log(clientHeight);
         if (clientHeight > 1080) {
             clientHeight = 1080;
         }
@@ -86,14 +87,15 @@ function main(playerFrame) {
         if (clientWidth > canvas.width) {
             clientWidth = canvas.width;
         }
+        if (window.innerHeight < clientHeight) {
+            clientHeight = window.innerHeight - 20;
+            clientWidth = clientHeight * (16/9)
+        }
         canvasContainer.style.height = `${clientHeight}px`;
         canvasContainer.style.width = `${clientWidth}px`;
     }
     window.addEventListener("resize", () => {
-        console.log(window.innerHeight);
         clientDimension(canvasContainer);
-        console.log("changed");
-        console.log(window.innerHeight);
     });
     clientDimension(canvasContainer);
 
@@ -103,7 +105,7 @@ function main(playerFrame) {
     }
     const canvasCtx = intialCtx;
 
-    const socket = new WebSocket("ws://192.168.1.113:1205/ws");
+    const socket = new WebSocket("ws://localhost:1205/ws");
 
     socket.onopen = () => {
         socket.send(
@@ -183,16 +185,16 @@ function main(playerFrame) {
                 playerWidth = playerFrame.pinkWalkLeft[data.frame].width;
             }
 
-            if (keys.w && data.y > 0) {
+            if (keys.w && data.y > 40) {
                 data.y -= 10;
             }
-            if (keys.a && data.x > 0) {
+            if (keys.a && data.x > 40) {
                 data.x -= 10;
             }
-            if (keys.s && data.y + playerHeight < canvas.height) {
+            if (keys.s && data.y + playerHeight < canvas.height - 40) {
                 data.y += 10;
             }
-            if (keys.d && data.x + playerWidth + 10 < canvas.width) {
+            if (keys.d && data.x + playerWidth + 10 < canvas.width - 40) {
                 data.x += 10;
             }
             if (!(keys.a && keys.d)) {
