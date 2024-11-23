@@ -163,8 +163,7 @@ function main(playerFrame) {
     let lastFrameTime = 0;
     const playerHeight = 64;
     const playerWidth = 64;
-    let moveValX = 2;
-    let moveValY = 2;
+    let moveVal = 10;
     /**
      * @param {number} timestamp
      */
@@ -187,49 +186,23 @@ function main(playerFrame) {
         };
 
         if (elapsed > interval) {
-            if (keys.w && data.y > 20) {
-                data.y -= moveValY;
-                increaseMoveValY();
+            if (keys.w && validMove(data.x, data.y - moveVal)) {
+                data.y -= moveVal;
             }
-            if (keys.a && data.x > 20) {
-                data.x -= moveValX;
-                increaseMoveValX();
+            if (keys.a && validMove(data.x - moveVal, data.y)) {
+                data.x -= moveVal;
             }
-            if (keys.s && data.y + playerHeight < canvasHeight - 20) {
-                data.y += moveValY;
-                increaseMoveValY();
+            if (keys.s && validMove(data.x, data.y + playerHeight + moveVal)) {
+                data.y += moveVal;
             }
-            if (keys.d && data.x + playerWidth < canvasWidth - 20) {
-                data.x += moveValX;
-                increaseMoveValX();
+            if (keys.d && validMove(data.x + playerWidth + moveVal, data.y)) {
+                data.x += moveVal;
             }
             if (!(keys.a && keys.d)) {
                 if (keys.a) {
                     data.facing = "left";
                 } else if (keys.d) {
                     data.facing = "right";
-                }
-            }
-            function increaseMoveValX() {
-                if (moveValX < 10) {
-                    moveValX += 4;
-                }
-                if (keys["shift"] && moveValX < 15) {
-                    moveValX += 2;
-                }
-                if (!keys["shift"] && moveValX > 10) {
-                    moveValX = 10;
-                }
-            }
-            function increaseMoveValY() {
-                if (moveValY < 10) {
-                    moveValY += 4;
-                }
-                if (keys["shift"] && moveValY < 15) {
-                    moveValY += 2;
-                }
-                if (!keys["shift"] && moveValY > 10) {
-                    moveValY = 10;
                 }
             }
 
@@ -242,9 +215,6 @@ function main(playerFrame) {
             lastFrameTime = timestamp - (elapsed % interval);
             const walking = movementKeys.some((key) => keys[key]);
             if (walking) {
-                if (keys["shift"]) {
-                    data.changeFrame = true;
-                }
                 if (data.changeFrame) {
                     data.frame += 1;
                     data.changeFrame = false;
@@ -262,13 +232,11 @@ function main(playerFrame) {
                 }
             } else {
                 data.frame = 0;
-                moveValX = 2;
-                moveValY = 2;
             }
 
             renderGame(playerState, gameCtx, playerCtx, playerFrame);
             socket.send(JSON.stringify({ type: "move", data: data }));
-            console.log(data.x, data.y);
+            // console.log(data.x, data.y);
         }
         requestAnimationFrame(gameLoop);
     }
