@@ -1,5 +1,12 @@
 /**
- * @typedef {{ blueWalkLeft: HTMLImageElement[]; blueWalkRight: HTMLImageElement[]; pinkWalkLeft: HTMLImageElement[]; pinkWalkRight: HTMLImageElement[]; }} PlayerFrame
+ * @typedef {{
+ * blueWalkLeft: HTMLImageElement[],
+ * blueWalkRight: HTMLImageElement[],
+ * pinkWalkLeft: HTMLImageElement[],
+ * pinkWalkRight: HTMLImageElement[],
+ * dining: HTMLImageElement[],
+ * background: HTMLImageElement[]
+ *}} Asset
  * @typedef {{ color: string, action: string, target: string, x: number, y: number, frame: number, changeFrame: boolean, facing: string}} State
  * @typedef { Object<string, State>} PlayerState
  */
@@ -14,11 +21,18 @@ const startingPos = {
 };
 
 document.addEventListener("DOMContentLoaded", async function () {
-    const playerFrame = await fetchPlayerFrames();
+    const fetchLoad = document.getElementById("fetch-load");
+    if (!(fetchLoad instanceof HTMLParagraphElement)) {
+        throw new Error("cannot find fetch load element");
+    }
+
+    const asset = await fetchAsset();
+    fetchLoad.hidden = true;
+
     playerSelect()
         .then((selected) => {
             color = selected;
-            main(playerFrame);
+            main(asset);
         })
         .catch(() => {
             console.error("failed to select player");
@@ -26,9 +40,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
 /**
- * @param {PlayerFrame} playerFrame
+ * @param {Asset} asset
  */
-function main(playerFrame) {
+function main(asset) {
     const canvasContainer = document.getElementById("game-canvas--container");
     if (!(canvasContainer instanceof HTMLDivElement)) {
         throw new Error("cannot find game canvas container");
@@ -234,7 +248,7 @@ function main(playerFrame) {
                 data.frame = 0;
             }
 
-            renderGame(playerState, gameCtx, playerCtx, playerFrame);
+            renderGame(playerState, gameCtx, playerCtx, asset);
             socket.send(JSON.stringify({ type: "move", data: data }));
             // console.log(data.x, data.y);
         }
@@ -247,9 +261,9 @@ function main(playerFrame) {
  * @param {PlayerState} playerState
  * @param {CanvasRenderingContext2D} gameCtx
  * @param {CanvasRenderingContext2D} playerCtx
- * @param {PlayerFrame} playerFrame
+ * @param {Asset} asset
  */
-function renderGame(playerState, gameCtx, playerCtx, playerFrame) {
+function renderGame(playerState, gameCtx, playerCtx, asset) {
     gameCtx.clearRect(0, 0, canvasWidth, canvasHeight);
     playerCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 
@@ -259,14 +273,14 @@ function renderGame(playerState, gameCtx, playerCtx, playerFrame) {
     function renderPlayer(player) {
         const state = playerState[player];
 
-        let walkingFrame = playerFrame.pinkWalkRight;
+        let walkingFrame = asset.pinkWalkRight;
         if (playerState[player].color === "blue") {
-            walkingFrame = playerFrame.blueWalkRight;
+            walkingFrame = asset.blueWalkRight;
         }
         if (playerState[player].facing === "left") {
-            walkingFrame = playerFrame.pinkWalkLeft;
+            walkingFrame = asset.pinkWalkLeft;
             if (playerState[player].color === "blue") {
-                walkingFrame = playerFrame.blueWalkLeft;
+                walkingFrame = asset.blueWalkLeft;
             }
         }
         playerCtx.drawImage(walkingFrame[state.frame], state.x, state.y);

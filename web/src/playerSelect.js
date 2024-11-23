@@ -4,6 +4,8 @@ function playerSelect() {
         if (!(playerSelectMenu instanceof HTMLDivElement)) {
             throw new Error("did not found player select menu");
         }
+        playerSelectMenu.hidden = false;
+
         const blueOption = document.getElementById("player-select--blue");
         if (!(blueOption instanceof HTMLDivElement)) {
             throw new Error("did not found blue option");

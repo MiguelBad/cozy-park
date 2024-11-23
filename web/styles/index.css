@@ -51,25 +51,26 @@ body {
     z-index: 1;
     background-image: url(/web/assets/bg/canvas-bg.png);
     background-size: cover;
-    transition: transform 0.1s ease;
+    transition: transform 0.1s ease-out;
 }
 
 #game-canvas {
     position: absolute;
     z-index: 2;
-    /* transform: translate(-1200px, -800px); */
-    /* transition: transform 0.1s ease; */
 }
 
 #player-canvas {
     position: absolute;
     z-index: 2;
-    /* transform: translate(-1200px, -800px); */
-    /* transition: transform 0.1s ease; */
 }
 
 #game-canvas--container {
     position: relative;
     overflow: hidden;
     border-radius: 20px;
+}
+
+#fetch-load {
+    color: white;
+    text-align: center;
 }
