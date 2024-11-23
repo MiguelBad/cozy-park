@@ -4,7 +4,11 @@
  * blueWalkRight: HTMLImageElement[],
  * pinkWalkLeft: HTMLImageElement[],
  * pinkWalkRight: HTMLImageElement[],
- * dining: HTMLImageElement[],
+ * diningEmpty: HTMLImageElement[],
+ * diningBlue: HTMLImageElement[],
+ * diningPink: HTMLImageElement[],
+ * diningBluePink: HTMLImageElement[],
+ * diningPinkBlue: HTMLImageElement[],
  * background: HTMLImageElement[]
  * }>}
  */
@@ -30,16 +34,11 @@ async function fetchAsset() {
             "assets/frames/walk/pink-right-2nd.png",
             "assets/frames/walk/pink-right-3rd.png",
         ],
-        dining: [
-            "assets/dining/dining-empty.png",
-            "assets/dining/dining-resto.png",
-            "assets/dining/dining-blue-left.png",
-            "assets/dining/dining-blue-right.png",
-            "assets/dining/dining-pink-left.png",
-            "assets/dining/dining-pink-right.png",
-            "assets/dining/dining-blue-pink.png",
-            "assets/dining/dining-pink-blue.png",
-        ],
+        diningEmpty: ["assets/dining/dining-empty.png"],
+        diningBlue: ["assets/dining/dining-blue-left.png", "assets/dining/dining-blue-right.png"],
+        diningPink: ["assets/dining/dining-pink-left.png", "assets/dining/dining-pink-right.png"],
+        diningBluePink: ["assets/dining/dining-blue-pink.png"],
+        diningPinkBlue: ["assets/dining/dining-pink-blue.png"],
         background: ["assets/bg/canvas-bg.png"],
     };
 
@@ -49,7 +48,11 @@ async function fetchAsset() {
      * blueWalkRight: HTMLImageElement[],
      * pinkWalkLeft: HTMLImageElement[],
      * pinkWalkRight: HTMLImageElement[],
-     * dining: HTMLImageElement[],
+     * diningEmpty: HTMLImageElement[],
+     * diningBlue: HTMLImageElement[],
+     * diningPink: HTMLImageElement[],
+     * diningBluePink: HTMLImageElement[],
+     * diningPinkBlue: HTMLImageElement[],
      * background: HTMLImageElement[]
      * }}
      */
@@ -58,7 +61,11 @@ async function fetchAsset() {
         blueWalkRight: [],
         pinkWalkLeft: [],
         pinkWalkRight: [],
-        dining: [],
+        diningEmpty: [],
+        diningBlue: [],
+        diningPink: [],
+        diningBluePink: [],
+        diningPinkBlue: [],
         background: [],
     };
 
@@ -66,7 +73,11 @@ async function fetchAsset() {
     await preloadImages(path.blueWalkRight, preloaded.blueWalkRight);
     await preloadImages(path.pinkWalkLeft, preloaded.pinkWalkLeft);
     await preloadImages(path.pinkWalkRight, preloaded.pinkWalkRight);
-    await preloadImages(path.dining, preloaded.dining);
+    await preloadImages(path.diningEmpty, preloaded.diningEmpty);
+    await preloadImages(path.diningBlue, preloaded.diningBlue);
+    await preloadImages(path.diningPink, preloaded.diningPink);
+    await preloadImages(path.diningBluePink, preloaded.diningBluePink);
+    await preloadImages(path.diningPinkBlue, preloaded.diningPinkBlue);
     await preloadImages(path.background, preloaded.background);
 
     return preloaded;

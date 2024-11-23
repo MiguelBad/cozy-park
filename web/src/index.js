@@ -4,7 +4,11 @@
  * blueWalkRight: HTMLImageElement[],
  * pinkWalkLeft: HTMLImageElement[],
  * pinkWalkRight: HTMLImageElement[],
- * dining: HTMLImageElement[],
+ * diningEmpty: HTMLImageElement[],
+ * diningBlue: HTMLImageElement[],
+ * diningPink: HTMLImageElement[],
+ * diningBluePink: HTMLImageElement[],
+ * diningPinkBlue: HTMLImageElement[],
  * background: HTMLImageElement[]
  *}} Asset
  * @typedef {{ color: string, action: string, target: string, x: number, y: number, frame: number, changeFrame: boolean, facing: string}} State
@@ -248,7 +252,8 @@ function main(asset) {
                 data.frame = 0;
             }
 
-            renderGame(playerState, gameCtx, playerCtx, asset);
+            renderPlayer(playerState, playerCtx, asset);
+
             socket.send(JSON.stringify({ type: "move", data: data }));
             // console.log(data.x, data.y);
         }
@@ -259,12 +264,10 @@ function main(asset) {
 
 /**
  * @param {PlayerState} playerState
- * @param {CanvasRenderingContext2D} gameCtx
  * @param {CanvasRenderingContext2D} playerCtx
  * @param {Asset} asset
  */
-function renderGame(playerState, gameCtx, playerCtx, asset) {
-    gameCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+function renderPlayer(playerState, playerCtx, asset) {
     playerCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     /**
@@ -294,4 +297,14 @@ function renderGame(playerState, gameCtx, playerCtx, asset) {
     }
 
     renderPlayer(userId);
+}
+
+/**
+ * @param {CanvasRenderingContext2D} gameCtx
+ * @param {Asset} asset
+ */
+function renderDining(gameCtx, asset) {
+    gameCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    gameCtx.drawImage(asset.diningEmpty[0], 404, 1309);
 }
