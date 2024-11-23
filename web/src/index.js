@@ -171,6 +171,8 @@ function main(playerFrame) {
     let lastFrameTime = 0;
     const playerHeight = 64;
     const playerWidth = 64;
+    let moveValX = 2;
+    let moveValY = 2;
     /**
      * @param {number} timestamp
      */
@@ -192,30 +194,50 @@ function main(playerFrame) {
             changeFrame: playerState[userId].changeFrame,
         };
 
-        let moveVal = 10;
-        if (keys["shift"]) {
-            moveVal = 15;
-        }
-
         if (elapsed > interval) {
-            // console.log(keys["Shift"]);
             if (keys.w && data.y > 30) {
-                data.y -= moveVal;
+                data.y -= moveValY;
+                increaseMoveValY();
             }
             if (keys.a && data.x > 30) {
-                data.x -= moveVal;
+                data.x -= moveValX;
+                increaseMoveValX();
             }
             if (keys.s && data.y + playerHeight < canvasGame.height - 30) {
-                data.y += moveVal;
+                data.y += moveValY;
+                increaseMoveValY();
             }
             if (keys.d && data.x + playerWidth + 10 < canvasGame.width - 30) {
-                data.x += moveVal;
+                data.x += moveValX;
+                increaseMoveValX();
             }
             if (!(keys.a && keys.d)) {
                 if (keys.a) {
                     data.facing = "left";
                 } else if (keys.d) {
                     data.facing = "right";
+                }
+            }
+            function increaseMoveValX() {
+                if (moveValX < 10) {
+                    moveValX += 4;
+                }
+                if (keys["shift"] && moveValX < 15) {
+                    moveValX += 2;
+                }
+                if (!keys["shift"] && moveValX > 10) {
+                    moveValX = 10;
+                }
+            }
+            function increaseMoveValY() {
+                if (moveValY < 10) {
+                    moveValY += 4;
+                }
+                if (keys["shift"] && moveValY < 15) {
+                    moveValY += 2;
+                }
+                if (!keys["shift"] && moveValY > 10) {
+                    moveValY = 10;
                 }
             }
 
@@ -260,6 +282,8 @@ function main(playerFrame) {
             } else {
                 data.frame = 0;
                 renderGame(playerState, canvasGame, canvasCtx, playerFrame);
+                moveValX = 2;
+                moveValY = 2;
             }
 
             socket.send(JSON.stringify({ type: "move", data: data }));
