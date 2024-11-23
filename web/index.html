@@ -1,34 +1,32 @@
 <!doctype html>
 <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Game!</title>
+        <link href="styles/index.css" rel="stylesheet" />
+        <script src="src/index.js"></script>
+        <script src="src/fetchPlayerFrames.js"></script>
+        <script src="src/playerSelect.js"></script>
+        <script src="src/obstacles.js"></script>
+    </head>
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Game!</title>
-    <link href="styles/index.css" rel="stylesheet" />
-    <script src="src/index.js"></script>
-    <script src="src/fetchPlayerFrames.js"></script>
-    <script src="src/playerSelect.js"></script>
-    <script src="src/obstacles.js"></script>
-</head>
-
-<body>
-    <div id="player-select--container">
-        <p class="player-select--text">Select Player</p>
-        <div id="player-select--option-container">
-            <div id="player-select--blue">
-                <img src="assets/frames/walk/blue-right-1st.png" />
-            </div>
-            <div id="player-select--pink">
-                <img src="assets/frames/walk/pink-left-1st.png" />
+    <body>
+        <div id="player-select--container">
+            <p class="player-select--text">Select Player</p>
+            <div id="player-select--option-container">
+                <div id="player-select--blue">
+                    <img src="assets/frames/walk/blue-right-1st.png" />
+                </div>
+                <div id="player-select--pink">
+                    <img src="assets/frames/walk/pink-left-1st.png" />
+                </div>
             </div>
         </div>
-    </div>
-    <div hidden="true" id="game-canvas--container">
-        <canvas height="1500" width="2500" id="player-canvas"></canvas>
-        <canvas height="1500" width="2500" id="background-canvas"></canvas>
-        <canvas height="1500" width="2500" id="game-canvas"></canvas>
-    </div>
-</body>
-
+        <div hidden="true" id="game-canvas--container">
+            <canvas height="1500" width="2500" id="player-canvas"></canvas>
+            <canvas height="1500" width="2500" id="background-canvas"></canvas>
+            <canvas height="1500" width="2500" id="game-canvas"></canvas>
+        </div>
+    </body>
 </html>
