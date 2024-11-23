@@ -46,12 +46,22 @@ body {
     height: 120px;
 }
 
-#game-canvas {
+#background-canvas {
+    position: absolute;
+    z-index: 1;
     background-image: url(/web/assets/bg/canvas-bg.png);
     background-size: cover;
+    transition: transform 0.1s ease;
+}
+
+#game-canvas {
+    position: absolute;
+    z-index: 2;
+    transform: translate(-1200px, -800px);
 }
 
 #game-canvas--container {
+    position: relative;
     overflow: hidden;
     border-radius: 20px;
 }

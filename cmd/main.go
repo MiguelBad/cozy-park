@@ -8,8 +8,8 @@ import (
 	"sync"
 )
 
-const XCenter = 1250
-const YCenter = 750
+const XCenter = 2200
+const YCenter = 1300
 
 var (
 	upgrader = websocket.Upgrader{
