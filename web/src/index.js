@@ -6,6 +6,8 @@
 
 let userId = "";
 let color = "";
+const canvasWidth = 2500;
+const canvasHeight = 1500;
 const startingPos = {
     x: 2200,
     y: 1300,
@@ -64,11 +66,17 @@ function main(playerFrame) {
     }
     const canvasBackground = initialCanvasBackground;
 
-    const initialCanvas = document.getElementById("game-canvas");
-    if (!(initialCanvas instanceof HTMLCanvasElement)) {
+    const initialPlayerCanvas = document.getElementById("player-canvas");
+    if (!(initialPlayerCanvas instanceof HTMLCanvasElement)) {
         throw new Error("cannot find game canvas");
     }
-    const canvasGame = initialCanvas;
+    const playerCanvas = initialPlayerCanvas;
+
+    const initialGameCanvas = document.getElementById("game-canvas");
+    if (!(initialGameCanvas instanceof HTMLCanvasElement)) {
+        throw new Error("cannot find game canvas");
+    }
+    const gameCanvas = initialGameCanvas;
 
     let clientWidth = window.innerWidth - 20;
     const aspectRatio = 9 / 16;
@@ -82,14 +90,14 @@ function main(playerFrame) {
         if (clientHeight > 1080) {
             clientHeight = 1080;
         }
-        if (clientHeight > canvasGame.height) {
-            clientHeight = canvasGame.height;
+        if (clientHeight > canvasHeight) {
+            clientHeight = canvasHeight;
         }
         if (clientWidth > 1920) {
             clientWidth = 1920;
         }
-        if (clientWidth > canvasGame.width) {
-            clientWidth = canvasGame.width;
+        if (clientWidth > canvasWidth) {
+            clientWidth = canvasWidth;
         }
         if (window.innerHeight < clientHeight) {
             clientHeight = window.innerHeight - 20;
@@ -103,17 +111,26 @@ function main(playerFrame) {
     });
     clientDimension(canvasContainer);
 
-    const intialCtx = canvasGame.getContext("2d");
-    if (!(intialCtx instanceof CanvasRenderingContext2D)) {
+    const initialGameCtx = gameCanvas.getContext("2d");
+    if (!(initialGameCtx instanceof CanvasRenderingContext2D)) {
         throw new Error("failed to create canvas context");
     }
-    const canvasCtx = intialCtx;
+    const gameCtx = initialGameCtx;
+
+    const initialPlayerCtx = gameCanvas.getContext("2d");
+    if (!(initialPlayerCtx instanceof CanvasRenderingContext2D)) {
+        throw new Error("failed to create canvas context");
+    }
+    const playerCtx = initialPlayerCtx;
 
     const socket = new WebSocket("ws://localhost:1205/ws");
 
     socket.onopen = () => {
         socket.send(
-            JSON.stringify({ type: "", data: { x: startingPos.x, y: startingPos.y, color: color } })
+            JSON.stringify({
+                type: "",
+                data: { x: startingPos.x, y: startingPos.y, facing: "left", color: color },
+            })
         );
     };
 
@@ -180,8 +197,8 @@ function main(playerFrame) {
         const elapsed = timestamp - lastFrameTime;
 
         if (!userId || !playerState || !color) {
-            canvasCtx.font = "50px Arial";
-            canvasCtx.fillText("Loading...", canvasGame.width / 2, canvasGame.height / 2);
+            gameCtx.font = "50px Arial";
+            gameCtx.fillText("Loading...", canvasWidth / 2, canvasHeight / 2);
             requestAnimationFrame(gameLoop);
             return;
         }
@@ -203,11 +220,11 @@ function main(playerFrame) {
                 data.x -= moveValX;
                 increaseMoveValX();
             }
-            if (keys.s && data.y + playerHeight < canvasGame.height - 30) {
+            if (keys.s && data.y + playerHeight < canvasHeight - 30) {
                 data.y += moveValY;
                 increaseMoveValY();
             }
-            if (keys.d && data.x + playerWidth + 10 < canvasGame.width - 30) {
+            if (keys.d && data.x + playerWidth + 10 < canvasWidth - 30) {
                 data.x += moveValX;
                 increaseMoveValX();
             }
@@ -253,8 +270,11 @@ function main(playerFrame) {
             // } else if (yTranslate < -800) {
             //     yTranslate = -800;
             // }
-            // console.log(xTranslate, yTranslate, clientWidth, clientHeight);
-            canvasGame.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
+            console.log(
+                `xTranslate: ${xTranslate}\nyTranslate${yTranslate}\n\nclientWidth:${clientWidth}\nclientHeight: ${clientHeight}\n\nx pos: ${data.x}\nypos: ${data.y}`
+            );
+            playerCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
+            gameCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
             canvasBackground.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
 
             lastFrameTime = timestamp - (elapsed % interval);
@@ -278,14 +298,13 @@ function main(playerFrame) {
                 ) {
                     data.frame = 0;
                 }
-                renderGame(playerState, canvasGame, canvasCtx, playerFrame);
             } else {
                 data.frame = 0;
-                renderGame(playerState, canvasGame, canvasCtx, playerFrame);
                 moveValX = 2;
                 moveValY = 2;
             }
 
+            renderGame(playerState, gameCtx, playerCtx, playerFrame);
             socket.send(JSON.stringify({ type: "move", data: data }));
             // console.log(data.x, data.y);
         }
@@ -296,12 +315,13 @@ function main(playerFrame) {
 
 /**
  * @param {PlayerState} playerState
- * @param {HTMLCanvasElement} canvas
- * @param {CanvasRenderingContext2D} context
+ * @param {CanvasRenderingContext2D} gameCtx
+ * @param {CanvasRenderingContext2D} playerCtx
  * @param {PlayerFrame} playerFrame
  */
-function renderGame(playerState, canvas, context, playerFrame) {
-    context.clearRect(0, 0, canvas.width, canvas.height);
+function renderGame(playerState, gameCtx, playerCtx, playerFrame) {
+    gameCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+    playerCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     /**
      * @param {string} player
@@ -319,7 +339,7 @@ function renderGame(playerState, canvas, context, playerFrame) {
                 walkingFrame = playerFrame.blueWalkLeft;
             }
         }
-        context.drawImage(walkingFrame[state.frame], state.x, state.y);
+        playerCtx.drawImage(walkingFrame[state.frame], state.x, state.y);
     }
 
     for (const player in playerState) {

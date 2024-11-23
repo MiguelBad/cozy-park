@@ -80,7 +80,7 @@ func newPlayer(conn *websocket.Conn) *Player {
 			Action: "idle",
 			X:      XCenter,
 			Y:      YCenter,
-			Facing: "right",
+			Facing: "left",
 		},
 	}
 }
