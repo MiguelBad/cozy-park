@@ -1,3 +1,4 @@
+const d = 64; // player dimension 64x64
 const obstacles = [
     { x: 0, y: 0, w: 205, h: 430 },
     { x: 0, y: 430, w: 399, h: 562 },
@@ -23,20 +24,20 @@ const obstacles = [
  * @return {boolean}
  */
 function validMove(x, y) {
-    if (y < 20 || y > canvasHeight - 20) {
+    if (y < 20 || y + d > canvasHeight - 20) {
         return false;
     }
 
-    if (x < 20 || x > canvasWidth - 20) {
+    if (x < 20 || x + d > canvasWidth - 20) {
         return false;
     }
 
     for (const obstacle of obstacles) {
         if (
-            x > obstacle.x &&
-            x < obstacle.w + obstacle.x &&
-            y > obstacle.y &&
-            y < obstacle.h + obstacle.y
+            ((x > obstacle.x && x < obstacle.w + obstacle.x) ||
+                (x + d > obstacle.x && x + d < obstacle.w + obstacle.x)) &&
+            ((y > obstacle.y && y < obstacle.h + obstacle.y) ||
+                (y + d > obstacle.y && y + d < obstacle.h + obstacle.y))
         ) {
             return false;
         }

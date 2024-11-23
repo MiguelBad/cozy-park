@@ -98,7 +98,7 @@ function main(playerFrame) {
     }
     const playerCtx = initialPlayerCtx;
 
-    const socket = new WebSocket("ws://localhost:1205/ws");
+    const socket = new WebSocket("ws://192.168.1.105:1205/ws");
 
     socket.onopen = () => {
         socket.send(
@@ -192,10 +192,10 @@ function main(playerFrame) {
             if (keys.a && validMove(data.x - moveVal, data.y)) {
                 data.x -= moveVal;
             }
-            if (keys.s && validMove(data.x, data.y + playerHeight + moveVal)) {
+            if (keys.s && validMove(data.x, data.y + moveVal)) {
                 data.y += moveVal;
             }
-            if (keys.d && validMove(data.x + playerWidth + moveVal, data.y)) {
+            if (keys.d && validMove(data.x + moveVal, data.y)) {
                 data.x += moveVal;
             }
             if (!(keys.a && keys.d)) {
