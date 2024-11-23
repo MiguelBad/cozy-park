@@ -7,8 +7,8 @@
 let userId = "";
 let color = "";
 const startingPos = {
-    x: 1250,
-    y: 750,
+    x: 2200,
+    y: 1300,
 };
 
 document.addEventListener("DOMContentLoaded", async function () {
@@ -56,14 +56,19 @@ function main(playerFrame) {
     if (!(canvasContainer instanceof HTMLDivElement)) {
         throw new Error("cannot find game canvas container");
     }
+    canvasContainer.hidden = false;
+
+    const initialCanvasBackground = document.getElementById("background-canvas");
+    if (!(initialCanvasBackground instanceof HTMLCanvasElement)) {
+        throw new Error("cannot find game canvas background element");
+    }
+    const canvasBackground = initialCanvasBackground;
+
     const initialCanvas = document.getElementById("game-canvas");
     if (!(initialCanvas instanceof HTMLCanvasElement)) {
         throw new Error("cannot find game canvas");
     }
-    const canvas = initialCanvas;
-    canvas.hidden = false;
-    canvas.width = 2500;
-    canvas.height = 1500;
+    const canvasGame = initialCanvas;
 
     let clientWidth = window.innerWidth - 20;
     const aspectRatio = 9 / 16;
@@ -74,22 +79,21 @@ function main(playerFrame) {
     function clientDimension(canvasContainer) {
         clientWidth = window.innerWidth - 20;
         clientHeight = clientWidth * aspectRatio;
-        console.log(clientHeight);
         if (clientHeight > 1080) {
             clientHeight = 1080;
         }
-        if (clientHeight > canvas.height) {
-            clientHeight = canvas.height;
+        if (clientHeight > canvasGame.height) {
+            clientHeight = canvasGame.height;
         }
         if (clientWidth > 1920) {
             clientWidth = 1920;
         }
-        if (clientWidth > canvas.width) {
-            clientWidth = canvas.width;
+        if (clientWidth > canvasGame.width) {
+            clientWidth = canvasGame.width;
         }
         if (window.innerHeight < clientHeight) {
             clientHeight = window.innerHeight - 20;
-            clientWidth = clientHeight * (16/9)
+            clientWidth = clientHeight * (16 / 9);
         }
         canvasContainer.style.height = `${clientHeight}px`;
         canvasContainer.style.width = `${clientWidth}px`;
@@ -99,7 +103,7 @@ function main(playerFrame) {
     });
     clientDimension(canvasContainer);
 
-    const intialCtx = canvas.getContext("2d");
+    const intialCtx = canvasGame.getContext("2d");
     if (!(intialCtx instanceof CanvasRenderingContext2D)) {
         throw new Error("failed to create canvas context");
     }
@@ -139,23 +143,34 @@ function main(playerFrame) {
     let keys = {};
     const movementKeys = ["w", "a", "s", "d"];
     document.addEventListener("keydown", (event) => {
-        if (keys[event.key]) {
+        if (keys[event.key.toLowerCase()]) {
             return;
         }
-        keys[event.key] = true;
+        keys[event.key.toLowerCase()] = true;
     });
     document.addEventListener("keyup", (event) => {
-        keys[event.key] = false;
+        keys[event.key.toLowerCase()] = false;
     });
     window.addEventListener("blur", () => {
         for (const key in keys) {
             keys[key] = false;
         }
     });
+    window.addEventListener(
+        "wheel",
+        (event) => {
+            if (event.ctrlKey) {
+                event.preventDefault();
+            }
+        },
+        { passive: false }
+    );
 
     const fps = 20;
     const interval = 1000 / fps;
     let lastFrameTime = 0;
+    const playerHeight = 64;
+    const playerWidth = 64;
     /**
      * @param {number} timestamp
      */
@@ -164,7 +179,7 @@ function main(playerFrame) {
 
         if (!userId || !playerState || !color) {
             canvasCtx.font = "50px Arial";
-            canvasCtx.fillText("Loading...", canvas.width / 2, canvas.height / 2);
+            canvasCtx.fillText("Loading...", canvasGame.width / 2, canvasGame.height / 2);
             requestAnimationFrame(gameLoop);
             return;
         }
@@ -177,25 +192,24 @@ function main(playerFrame) {
             changeFrame: playerState[userId].changeFrame,
         };
 
-        if (elapsed > interval) {
-            let playerHeight = playerFrame.blueWalkLeft[data.frame].height;
-            let playerWidth = playerFrame.blueWalkLeft[data.frame].width;
-            if (color === "pink") {
-                playerHeight = playerFrame.pinkWalkLeft[data.frame].height;
-                playerWidth = playerFrame.pinkWalkLeft[data.frame].width;
-            }
+        let moveVal = 10;
+        if (keys["shift"]) {
+            moveVal = 15;
+        }
 
-            if (keys.w && data.y > 40) {
-                data.y -= 10;
+        if (elapsed > interval) {
+            // console.log(keys["Shift"]);
+            if (keys.w && data.y > 30) {
+                data.y -= moveVal;
             }
-            if (keys.a && data.x > 40) {
-                data.x -= 10;
+            if (keys.a && data.x > 30) {
+                data.x -= moveVal;
             }
-            if (keys.s && data.y + playerHeight < canvas.height - 40) {
-                data.y += 10;
+            if (keys.s && data.y + playerHeight < canvasGame.height - 30) {
+                data.y += moveVal;
             }
-            if (keys.d && data.x + playerWidth + 10 < canvas.width - 40) {
-                data.x += 10;
+            if (keys.d && data.x + playerWidth + 10 < canvasGame.width - 30) {
+                data.x += moveVal;
             }
             if (!(keys.a && keys.d)) {
                 if (keys.a) {
@@ -207,21 +221,26 @@ function main(playerFrame) {
 
             let xTranslate = clientWidth / 2 - playerWidth / 2 - data.x;
             let yTranslate = clientHeight / 2 - playerHeight / 2 - data.y;
-            if (xTranslate > 300) {
-                xTranslate = 300;
-            } else if (xTranslate < -800) {
-                xTranslate = -800;
-            }
-            if (yTranslate > 100) {
-                yTranslate = 100;
-            } else if (yTranslate < -500) {
-                yTranslate = -500;
-            }
-            canvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
+            // if (xTranslate > 300) {
+            //     xTranslate = 300;
+            // } else if (xTranslate < -1200) {
+            //     xTranslate = -1200;
+            // }
+            // if (yTranslate > 0) {
+            //     yTranslate = 0;
+            // } else if (yTranslate < -800) {
+            //     yTranslate = -800;
+            // }
+            // console.log(xTranslate, yTranslate, clientWidth, clientHeight);
+            canvasGame.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
+            canvasBackground.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
 
             lastFrameTime = timestamp - (elapsed % interval);
             const walking = movementKeys.some((key) => keys[key]);
             if (walking) {
+                if (keys["shift"]) {
+                    data.changeFrame = true;
+                }
                 if (data.changeFrame) {
                     data.frame += 1;
                     data.changeFrame = false;
@@ -237,13 +256,14 @@ function main(playerFrame) {
                 ) {
                     data.frame = 0;
                 }
-                renderGame(playerState, canvas, canvasCtx, playerFrame);
+                renderGame(playerState, canvasGame, canvasCtx, playerFrame);
             } else {
                 data.frame = 0;
-                renderGame(playerState, canvas, canvasCtx, playerFrame);
+                renderGame(playerState, canvasGame, canvasCtx, playerFrame);
             }
 
             socket.send(JSON.stringify({ type: "move", data: data }));
+            // console.log(data.x, data.y);
         }
         requestAnimationFrame(gameLoop);
     }
