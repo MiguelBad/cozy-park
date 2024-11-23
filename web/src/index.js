@@ -6,8 +6,8 @@
 
 let userId = "";
 let color = "";
-const canvasWidth = 2500;
-const canvasHeight = 1500;
+const canvasWidth = 2496;
+const canvasHeight = canvasWidth * (3 / 5);
 const startingPos = {
     x: 2200,
     y: 1300,
@@ -15,40 +15,15 @@ const startingPos = {
 
 document.addEventListener("DOMContentLoaded", async function () {
     const playerFrame = await fetchPlayerFrames();
-    playerSelect(playerFrame);
+    playerSelect()
+        .then((selected) => {
+            color = selected;
+            main(playerFrame);
+        })
+        .catch(() => {
+            console.error("failed to select player");
+        });
 });
-
-/**
- * @param {PlayerFrame} playerFrame
- */
-function playerSelect(playerFrame) {
-    const playerSelectMenu = document.getElementById("player-select--container");
-    if (!(playerSelectMenu instanceof HTMLDivElement)) {
-        throw new Error("did not found player select menu");
-    }
-    const blueOption = document.getElementById("player-select--blue");
-    if (!(blueOption instanceof HTMLDivElement)) {
-        throw new Error("did not found blue option");
-    }
-    const pinkOption = document.getElementById("player-select--pink");
-    if (!(pinkOption instanceof HTMLDivElement)) {
-        throw new Error("did not found pink option");
-    }
-
-    blueOption.addEventListener("click", () => {
-        playerSelectMenu.style.display = "none";
-        playerSelectMenu.hidden = true;
-        color = "blue";
-        main(playerFrame);
-    });
-
-    pinkOption.addEventListener("click", () => {
-        playerSelectMenu.style.display = "none";
-        playerSelectMenu.hidden = true;
-        color = "pink";
-        main(playerFrame);
-    });
-}
 
 /**
  * @param {PlayerFrame} playerFrame
@@ -212,19 +187,19 @@ function main(playerFrame) {
         };
 
         if (elapsed > interval) {
-            if (keys.w && data.y > 30) {
+            if (keys.w && data.y > 20) {
                 data.y -= moveValY;
                 increaseMoveValY();
             }
-            if (keys.a && data.x > 30) {
+            if (keys.a && data.x > 20) {
                 data.x -= moveValX;
                 increaseMoveValX();
             }
-            if (keys.s && data.y + playerHeight < canvasHeight - 30) {
+            if (keys.s && data.y + playerHeight < canvasHeight - 20) {
                 data.y += moveValY;
                 increaseMoveValY();
             }
-            if (keys.d && data.x + playerWidth + 10 < canvasWidth - 30) {
+            if (keys.d && data.x + playerWidth < canvasWidth - 20) {
                 data.x += moveValX;
                 increaseMoveValX();
             }
@@ -260,19 +235,6 @@ function main(playerFrame) {
 
             let xTranslate = clientWidth / 2 - playerWidth / 2 - data.x;
             let yTranslate = clientHeight / 2 - playerHeight / 2 - data.y;
-            // if (xTranslate > 300) {
-            //     xTranslate = 300;
-            // } else if (xTranslate < -1200) {
-            //     xTranslate = -1200;
-            // }
-            // if (yTranslate > 0) {
-            //     yTranslate = 0;
-            // } else if (yTranslate < -800) {
-            //     yTranslate = -800;
-            // }
-            console.log(
-                `xTranslate: ${xTranslate}\nyTranslate${yTranslate}\n\nclientWidth:${clientWidth}\nclientHeight: ${clientHeight}\n\nx pos: ${data.x}\nypos: ${data.y}`
-            );
             playerCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
             gameCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
             canvasBackground.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
@@ -306,7 +268,7 @@ function main(playerFrame) {
 
             renderGame(playerState, gameCtx, playerCtx, playerFrame);
             socket.send(JSON.stringify({ type: "move", data: data }));
-            // console.log(data.x, data.y);
+            console.log(data.x, data.y);
         }
         requestAnimationFrame(gameLoop);
     }
