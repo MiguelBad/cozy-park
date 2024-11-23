@@ -1,5 +1,5 @@
 {
-  "name": "5th-aniv",
+  "name": "cozy-park",
   "version": "1.0.0",
   "description": "anniv!",
   "main": "index.js",
@@ -8,15 +8,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MiguelBad/5th-aniv.git"
+    "url": "git+https://github.com/MiguelBad/cozy-park.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/MiguelBad/5th-aniv/issues"
+    "url": "https://github.com/MiguelBad/cozy-park/issues"
   },
-  "homepage": "https://github.com/MiguelBad/5th-aniv#readme",
+  "homepage": "https://github.com/MiguelBad/cozy-park#readme",
   "devDependencies": {
     "jsdoc": "^4.0.4",
     "live-server": "^1.2.2"
