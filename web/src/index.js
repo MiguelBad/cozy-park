@@ -14,6 +14,8 @@
  * @typedef {{ color: string, action: string, target: string, x: number, y: number, frame: number, changeFrame: boolean, facing: string}} State
  * @typedef { Object<string, State>} PlayerState
  * @typedef {{x: number, y: number, facing: string, frame: number, changeFrame: boolean}} Data
+ * @typedef {{x: number, y: number, w: number, h: number}} Area
+ * @typedef {{x: number, y: number}} Pos
  */
 
 const Player = { userId: "", color: "" };
@@ -176,28 +178,37 @@ function main(asset) {
     };
     let xTranslate = 0;
     let yTranslate = 0;
-    gameCanvas.addEventListener("click", (event) => {
-        const click = {
-            x: event.x - xTranslate,
-            y: event.y - yTranslate,
-        };
-
-        if (isWithinArea(data, Area.Dining)) {
-            // handleDining(gameCtx, gameCanvas, asset, click);
-        } else if (isWithinArea(data, Area.FerrisWheel)) {
-        } else if (isWithinArea(data, Area.Lake)) {
-        }
-    });
-
     const Area = {
         Dining: { x: 0, y: 992, w: 727, h: 504 },
         FerrisWheel: { x: 0, y: 0, w: 762, h: 430 },
         Lake: { x: 1257, y: 0, w: 867, h: 314 },
     };
-
     const ObjectPos = {
         DiningTable: { x: 404, y: 1309 },
     };
+    gameCanvas.addEventListener("click", (event) => {
+        const click = {
+            x: event.offsetX,
+            y: event.offsetY,
+        };
+
+        if (isWithinArea(data, Area.Dining)) {
+            handleDining(
+                gameCtx,
+                gameCanvas,
+                asset,
+                click,
+                data,
+                {
+                    x: ObjectPos.DiningTable.x,
+                    y: ObjectPos.DiningTable.y,
+                },
+                Area.Dining
+            );
+        } else if (isWithinArea(data, Area.FerrisWheel)) {
+        } else if (isWithinArea(data, Area.Lake)) {
+        }
+    });
 
     renderGame(gameCtx, asset.diningEmpty[0], ObjectPos.DiningTable, Area.Dining);
 
@@ -206,7 +217,7 @@ function main(asset) {
     let lastFrameTime = 0;
     const playerHeight = 64;
     const playerWidth = 64;
-    let moveVal = 30;
+    let moveVal = 10;
     /**
      * @param {number} timestamp
      */
@@ -278,9 +289,7 @@ function main(asset) {
             } else {
                 data.frame = 0;
             }
-
             renderPlayer(playerState, playerCtx, asset);
-
             socket.send(JSON.stringify({ type: "move", data: data }));
         }
         requestAnimationFrame(gameLoop);
@@ -328,8 +337,8 @@ function renderPlayer(playerState, playerCtx, asset) {
 /**
  * @param {CanvasRenderingContext2D} gameCtx
  * @param {HTMLImageElement} frame
- * @param {{x: number, y: number}} pos
- * @param {{x: number, y: number, w: number, h: number}} area
+ * @param {Pos} pos
+ * @param {Area} area
  */
 function renderGame(gameCtx, frame, pos, area) {
     gameCtx.clearRect(area.x, area.y, area.w, area.h);
@@ -340,24 +349,30 @@ function renderGame(gameCtx, frame, pos, area) {
  * @param {CanvasRenderingContext2D} gameCtx
  * @param {HTMLCanvasElement} gameCanvas
  * @param {Asset} asset
- * @param {{x: number, y: number}} click
+ * @param {Pos} click
+ * @param {Data} data
+ * @param {Pos} tablePos
+ * @param {Area} area
  */
-function handleDining(gameCtx, gameCanvas, asset, click) {
+function handleDining(gameCtx, gameCanvas, asset, click, data, tablePos, area) {
     const Chair = {
         left: { x: 398, y: 1325, w: 79, h: 78 },
         right: { x: 595, y: 1325, w: 79, h: 78 },
     };
 
-    if (isWithinArea(click, Chair.left)) {
-        console.log("left");
-    } else if (isWithinArea(click, Chair.right)) {
+    if (isWithinArea(click, Chair.left) && isWithinArea({ x: data.x, y: data.y }, Chair.left)) {
+        renderGame(gameCtx, asset.diningBlue[0], tablePos, area);
+    } else if (
+        isWithinArea(click, Chair.right) &&
+        isWithinArea({ x: data.x, y: data.y }, Chair.right)
+    ) {
         console.log("right");
     }
 }
 
 /**
- * @param {{x: number, y: number}} pos
- * @param {{x: number, y: number, w: number, h: number}} area
+ * @param {Pos} pos
+ * @param {Area} area
  * @returns {boolean}
  */
 function isWithinArea(pos, area) {

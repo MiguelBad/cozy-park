@@ -63,6 +63,7 @@ body {
 #player-canvas {
     position: absolute;
     z-index: 3;
+    pointer-events: none;
 }
 
 #game-canvas--container {
