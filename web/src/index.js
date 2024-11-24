@@ -13,18 +13,17 @@
  *}} Asset
  * @typedef {{ color: string, action: string, target: string, x: number, y: number, frame: number, changeFrame: boolean, facing: string}} State
  * @typedef { Object<string, State>} PlayerState
+ * @typedef {{x: number, y: number, facing: string, frame: number, changeFrame: boolean}} Data
  */
 
-let userId = "";
-let color = "";
-const canvasWidth = 2496;
-const canvasHeight = canvasWidth * (3 / 5);
-const startingPos = {
-    x: 2200,
-    y: 1300,
+const Player = { userId: "", color: "" };
+const GameConfig = {
+    canvasWidth: 2496,
+    canvasHeight: 2496 * (3 / 5),
+    startingPos: { x: 2200, y: 1300 },
 };
 
-document.addEventListener("DOMContentLoaded", async function () {
+document.addEventListener("DOMContentLoaded", async function() {
     const fetchLoad = document.getElementById("fetch-load");
     if (!(fetchLoad instanceof HTMLParagraphElement)) {
         throw new Error("cannot find fetch load element");
@@ -35,7 +34,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     playerSelect()
         .then((selected) => {
-            color = selected;
+            Player.color = selected;
             main(asset);
         })
         .catch(() => {
@@ -80,22 +79,6 @@ function main(asset) {
     function clientDimension(canvasContainer) {
         clientWidth = window.innerWidth - 20;
         clientHeight = clientWidth * aspectRatio;
-        if (clientHeight > 1080) {
-            clientHeight = 1080;
-        }
-        if (clientHeight > canvasHeight) {
-            clientHeight = canvasHeight;
-        }
-        if (clientWidth > 1920) {
-            clientWidth = 1920;
-        }
-        if (clientWidth > canvasWidth) {
-            clientWidth = canvasWidth;
-        }
-        if (window.innerHeight < clientHeight) {
-            clientHeight = window.innerHeight - 20;
-            clientWidth = clientHeight * (16 / 9);
-        }
         canvasContainer.style.height = `${clientHeight}px`;
         canvasContainer.style.width = `${clientWidth}px`;
     }
@@ -110,7 +93,7 @@ function main(asset) {
     }
     const gameCtx = initialGameCtx;
 
-    const initialPlayerCtx = gameCanvas.getContext("2d");
+    const initialPlayerCtx = playerCanvas.getContext("2d");
     if (!(initialPlayerCtx instanceof CanvasRenderingContext2D)) {
         throw new Error("failed to create canvas context");
     }
@@ -122,7 +105,12 @@ function main(asset) {
         socket.send(
             JSON.stringify({
                 type: "",
-                data: { x: startingPos.x, y: startingPos.y, facing: "left", color: color },
+                data: {
+                    x: GameConfig.startingPos.x,
+                    y: GameConfig.startingPos.y,
+                    facing: "left",
+                    color: Player.color,
+                },
             })
         );
     };
@@ -138,7 +126,7 @@ function main(asset) {
                 playerState[serverMessage.id] = serverMessage.state;
                 break;
             case "connected":
-                userId = serverMessage.id;
+                Player.userId = serverMessage.id;
                 break;
             case "disconnected":
                 const disconnectedP = serverMessage.id;
@@ -176,32 +164,71 @@ function main(asset) {
         { passive: false }
     );
 
+    /**
+     * @type {Data}
+     */
+    const data = {
+        x: 0,
+        y: 0,
+        facing: "",
+        frame: 0,
+        changeFrame: false,
+    };
+    let xTranslate = 0;
+    let yTranslate = 0;
+    gameCanvas.addEventListener("click", (event) => {
+        const click = {
+            x: event.x - xTranslate,
+            y: event.y - yTranslate,
+        };
+
+        if (isWithinArea(data, Area.Dining)) {
+            // handleDining(gameCtx, gameCanvas, asset, click);
+        } else if (isWithinArea(data, Area.FerrisWheel)) {
+        } else if (isWithinArea(data, Area.Lake)) {
+        }
+    });
+
+    const Area = {
+        Dining: { x: 0, y: 992, w: 727, h: 504 },
+        FerrisWheel: { x: 0, y: 0, w: 762, h: 430 },
+        Lake: { x: 1257, y: 0, w: 867, h: 314 },
+    };
+
+    const ObjectPos = {
+        DiningTable: { x: 404, y: 1309 },
+    };
+
+    renderGame(gameCtx, asset.diningEmpty[0], ObjectPos.DiningTable, Area.Dining);
+
     const fps = 20;
     const interval = 1000 / fps;
     let lastFrameTime = 0;
     const playerHeight = 64;
     const playerWidth = 64;
-    let moveVal = 10;
+    let moveVal = 30;
     /**
      * @param {number} timestamp
      */
     function gameLoop(timestamp) {
         const elapsed = timestamp - lastFrameTime;
 
-        if (!userId || !playerState || !color) {
-            gameCtx.font = "50px Arial";
-            gameCtx.fillText("Loading...", canvasWidth / 2, canvasHeight / 2);
+        if (!Player.userId || !playerState || !Player.color) {
+            playerCtx.font = "50px Arial";
+            playerCtx.fillText(
+                "Loading...",
+                GameConfig.canvasWidth / 2,
+                GameConfig.canvasHeight / 2
+            );
             requestAnimationFrame(gameLoop);
             return;
         }
 
-        const data = {
-            x: playerState[userId].x,
-            y: playerState[userId].y,
-            facing: playerState[userId].facing,
-            frame: playerState[userId].frame,
-            changeFrame: playerState[userId].changeFrame,
-        };
+        data.x = playerState[Player.userId].x;
+        data.y = playerState[Player.userId].y;
+        data.facing = playerState[Player.userId].facing;
+        data.frame = playerState[Player.userId].frame;
+        data.changeFrame = playerState[Player.userId].changeFrame;
 
         if (elapsed > interval) {
             if (keys.w && validMove(data.x, data.y - moveVal)) {
@@ -224,8 +251,8 @@ function main(asset) {
                 }
             }
 
-            let xTranslate = clientWidth / 2 - playerWidth / 2 - data.x;
-            let yTranslate = clientHeight / 2 - playerHeight / 2 - data.y;
+            xTranslate = clientWidth / 2 - playerWidth / 2 - data.x;
+            yTranslate = clientHeight / 2 - playerHeight / 2 - data.y;
             playerCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
             gameCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
             canvasBackground.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
@@ -255,7 +282,6 @@ function main(asset) {
             renderPlayer(playerState, playerCtx, asset);
 
             socket.send(JSON.stringify({ type: "move", data: data }));
-            // console.log(data.x, data.y);
         }
         requestAnimationFrame(gameLoop);
     }
@@ -268,12 +294,12 @@ function main(asset) {
  * @param {Asset} asset
  */
 function renderPlayer(playerState, playerCtx, asset) {
-    playerCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+    playerCtx.clearRect(0, 0, GameConfig.canvasWidth, GameConfig.canvasHeight);
 
     /**
      * @param {string} player
      */
-    function renderPlayer(player) {
+    function renderPlayerHelper(player) {
         const state = playerState[player];
 
         let walkingFrame = asset.pinkWalkRight;
@@ -290,21 +316,59 @@ function renderPlayer(playerState, playerCtx, asset) {
     }
 
     for (const player in playerState) {
-        if (player === userId) {
+        if (player === Player.userId) {
             continue;
         }
-        renderPlayer(player);
+        renderPlayerHelper(player);
     }
 
-    renderPlayer(userId);
+    renderPlayerHelper(Player.userId);
 }
 
 /**
  * @param {CanvasRenderingContext2D} gameCtx
- * @param {Asset} asset
+ * @param {HTMLImageElement} frame
+ * @param {{x: number, y: number}} pos
+ * @param {{x: number, y: number, w: number, h: number}} area
  */
-function renderDining(gameCtx, asset) {
-    gameCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+function renderGame(gameCtx, frame, pos, area) {
+    gameCtx.clearRect(area.x, area.y, area.w, area.h);
+    gameCtx.drawImage(frame, pos.x, pos.y);
+}
 
-    gameCtx.drawImage(asset.diningEmpty[0], 404, 1309);
+/**
+ * @param {CanvasRenderingContext2D} gameCtx
+ * @param {HTMLCanvasElement} gameCanvas
+ * @param {Asset} asset
+ * @param {{x: number, y: number}} click
+ */
+function handleDining(gameCtx, gameCanvas, asset, click) {
+    const Chair = {
+        left: { x: 398, y: 1325, w: 79, h: 78 },
+        right: { x: 595, y: 1325, w: 79, h: 78 },
+    };
+
+    if (isWithinArea(click, Chair.left)) {
+        console.log("left");
+    } else if (isWithinArea(click, Chair.right)) {
+        console.log("right");
+    }
+}
+
+/**
+ * @param {{x: number, y: number}} pos
+ * @param {{x: number, y: number, w: number, h: number}} area
+ * @returns {boolean}
+ */
+function isWithinArea(pos, area) {
+    if (
+        ((pos.x > area.x && pos.x < area.w + area.x) ||
+            (pos.x + d > area.x && pos.x + d < area.w + area.x)) &&
+        ((pos.y > area.y && pos.y < area.h + area.y) ||
+            (pos.y + d > area.y && pos.y + d < area.h + area.y))
+    ) {
+        return true;
+    }
+
+    return false;
 }

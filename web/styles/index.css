@@ -57,11 +57,12 @@ body {
 #game-canvas {
     position: absolute;
     z-index: 2;
+    transition: transform 0.1s ease-out;
 }
 
 #player-canvas {
     position: absolute;
-    z-index: 2;
+    z-index: 3;
 }
 
 #game-canvas--container {

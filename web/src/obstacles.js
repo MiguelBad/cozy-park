@@ -1,6 +1,5 @@
 const d = 64; // player dimension 64x64
 const obstacles = [
-    // trees
     { x: 0, y: 0, w: 205, h: 430 },
     { x: 0, y: 430, w: 399, h: 562 },
     { x: 205, y: 0, w: 557, h: 77 },
@@ -36,11 +35,11 @@ const obstacles = [
  * @return {boolean}
  */
 function validMove(x, y) {
-    if (y < 20 || y + d > canvasHeight - 20) {
+    if (y < 20 || y + d > GameConfig.canvasHeight - 20) {
         return false;
     }
 
-    if (x < 20 || x + d > canvasWidth - 20) {
+    if (x < 20 || x + d > GameConfig.canvasWidth - 20) {
         return false;
     }
 

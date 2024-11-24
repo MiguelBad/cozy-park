@@ -8,8 +8,8 @@ import (
 	"sync"
 )
 
-const XCenter = 2200
-const YCenter = 1300
+const xStart = 2200
+const yStart = 1300
 
 var (
 	upgrader = websocket.Upgrader{
@@ -78,8 +78,8 @@ func newPlayer(conn *websocket.Conn) *Player {
 		id:   fmt.Sprintf("player_%d", len(playerList)+1),
 		state: &State{
 			Action: "idle",
-			X:      XCenter,
-			Y:      YCenter,
+			X:      xStart,
+			Y:      yStart,
 			Facing: "left",
 		},
 	}
