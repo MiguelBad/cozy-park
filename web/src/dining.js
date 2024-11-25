@@ -17,7 +17,7 @@ function handleDiningClick(gameCtx, asset, click, data, tablePos, area, socket, 
         if (diningState.left) {
             return;
         }
-        data.action = "interacting";
+        data.action = "dining";
         diningState.left = Player.color;
         socket.send(JSON.stringify({ type: "player", data: data }));
         socket.send(JSON.stringify({ type: "dining", data: diningState }));
@@ -29,7 +29,7 @@ function handleDiningClick(gameCtx, asset, click, data, tablePos, area, socket, 
         if (diningState.right) {
             return;
         }
-        data.action = "interacting";
+        data.action = "dining";
         diningState.right = Player.color;
         socket.send(JSON.stringify({ type: "player", data: data }));
         socket.send(JSON.stringify({ type: "dining", data: diningState }));

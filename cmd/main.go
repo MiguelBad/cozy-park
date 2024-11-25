@@ -21,6 +21,7 @@ var (
 	playerStateBroadcast = make(chan *Player)
 	clientInfoBroadcast  = make(chan *ClientConnectionPayload)
 	diningInfoBroadcast  = make(chan *DiningStatePayload)
+	ferrisInfoBroadcast  = make(chan *FerrisStatePayload)
 
 	playerList = newPlayerList()
 )
@@ -68,6 +69,12 @@ type DiningMessage struct {
 	Right string `json:"right"`
 }
 
+type FerrisMessage struct {
+	Current int   `json:"current"`
+	Cycle   int   `json:"cycle"`
+	Players []string `json:"players"`
+}
+
 type ClientConnectionPayload struct {
 	Type string `json:"type"`
 	Id   string `json:"id"`
@@ -85,11 +92,19 @@ type DiningStatePayload struct {
 	Right string `json:"right"`
 }
 
+type FerrisStatePayload struct {
+	Type    string `json:"type"`
+	Current int    `json:"current"`
+	Cycle   int    `json:"cycle"`
+	Players []string  `json:"players"`
+}
+
 func main() {
 	http.HandleFunc("/ws", handleConnections)
 	go handleMoveBroadcast()
 	go handleDisconnectBroadcast()
 	go handleDiningBroadcast()
+	go handleFerrisBroadcast()
 	log.Fatal(http.ListenAndServe(":1205", nil))
 }
 
@@ -204,8 +219,27 @@ func handleMessage(player *Player) {
 				Left:  diningMessage.Left,
 				Right: diningMessage.Right,
 			}
-			log.Println(diningStatePayload)
 			diningInfoBroadcast <- diningStatePayload
+		case "ferris":
+			databytes, err := json.Marshal(message.Data)
+			if err != nil {
+				log.Printf("failed to encode json on ferris data:\n%v\n", err)
+			}
+
+			var ferrisMessage FerrisMessage
+			err = json.Unmarshal(databytes, &ferrisMessage)
+			if err != nil {
+				log.Printf("failed to decode json on ferris message:\n%v\n", err)
+			}
+
+			ferrisStatePayload := &FerrisStatePayload{
+				Type:    "ferrisState",
+				Cycle:   ferrisMessage.Cycle,
+				Current: ferrisMessage.Current,
+				Players: ferrisMessage.Players,
+			}
+			log.Println(*ferrisStatePayload)
+			ferrisInfoBroadcast <- ferrisStatePayload
 		}
 
 		playerStateBroadcast <- player
@@ -219,7 +253,6 @@ func handleMoveBroadcast() {
 
 		for p := range playerList.pList {
 			payload := &PlayerStatePayload{Type: "playerState", Id: player.id, State: player.state}
-			// log.Println(payload.Type, payload.Id, payload.State)
 			p.mu.Lock()
 			err := p.conn.WriteJSON(*payload)
 			p.mu.Unlock()
@@ -255,12 +288,26 @@ func handleDiningBroadcast() {
 	for {
 		diningInfo := <-diningInfoBroadcast
 		for p := range playerList.pList {
-			log.Println(diningInfo)
 			p.mu.Lock()
 			err := p.conn.WriteJSON(*diningInfo)
 			p.mu.Unlock()
 			if err != nil {
 				log.Printf("failed to send dining info to %v\n:%v\n", p.id, err)
+				// todo error handle
+			}
+		}
+	}
+}
+
+func handleFerrisBroadcast() {
+	for {
+		ferrisInfo := <-ferrisInfoBroadcast
+		for p := range playerList.pList {
+			p.mu.Lock()
+			err := p.conn.WriteJSON(*ferrisInfo)
+			p.mu.Unlock()
+			if err != nil {
+				log.Printf("failed to send ferris info to %v\n:%v\n", p.id, err)
 				// todo error handle
 			}
 		}
