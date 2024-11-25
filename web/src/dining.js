@@ -14,7 +14,10 @@ function handleDiningClick(gameCtx, asset, click, data, tablePos, area, socket, 
         right: { x: 595, y: 1325, w: 79, h: 78 },
     };
     if (isWithinArea(click, Chair.left) && isWithinArea({ x: data.x, y: data.y }, Chair.left)) {
-        data.action = "dining-left";
+        if (diningState.left) {
+            return;
+        }
+        data.action = "interacting";
         diningState.left = Player.color;
         socket.send(JSON.stringify({ type: "player", data: data }));
         socket.send(JSON.stringify({ type: "dining", data: diningState }));
@@ -23,7 +26,10 @@ function handleDiningClick(gameCtx, asset, click, data, tablePos, area, socket, 
         isWithinArea(click, Chair.right) &&
         isWithinArea({ x: data.x, y: data.y }, Chair.right)
     ) {
-        data.action = "dining-right";
+        if (diningState.right) {
+            return;
+        }
+        data.action = "interacting";
         diningState.right = Player.color;
         socket.send(JSON.stringify({ type: "player", data: data }));
         socket.send(JSON.stringify({ type: "dining", data: diningState }));

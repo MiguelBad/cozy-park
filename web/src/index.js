@@ -163,16 +163,7 @@ function main(asset) {
             case "diningState":
                 diningState.left = serverMessage.left;
                 diningState.right = serverMessage.right;
-                renderDining(
-                    gameCtx,
-                    asset,
-                    {
-                        x: ObjectPos.DiningTable.x,
-                        y: ObjectPos.DiningTable.y,
-                    },
-                    Area.Dining,
-                    diningState
-                );
+                renderDining(gameCtx, asset, ObjectPos.DiningTable, Area.Dining, diningState);
                 break;
         }
     };
@@ -232,10 +223,7 @@ function main(asset) {
                 asset,
                 click,
                 data,
-                {
-                    x: ObjectPos.DiningTable.x,
-                    y: ObjectPos.DiningTable.y,
-                },
+                ObjectPos.DiningTable,
                 Area.Dining,
                 socket,
                 diningState
@@ -245,7 +233,7 @@ function main(asset) {
         }
     });
 
-    renderGame(gameCtx, asset.diningEmpty[0], ObjectPos.DiningTable, Area.Dining);
+    renderDining(gameCtx, asset, ObjectPos.DiningTable, Area.Dining, diningState);
 
     const fps = 20;
     const interval = 1000 / fps;
@@ -307,6 +295,17 @@ function main(asset) {
             lastFrameTime = timestamp - (elapsed % interval);
             const walking = movementKeys.some((key) => keys[key]);
             if (walking) {
+                data.action = "move";
+                if (diningState.left === Player.color) {
+                    diningState.left = "";
+                    socket.send(JSON.stringify({ type: "dining", data: diningState }));
+                    renderDining(gameCtx, asset, ObjectPos.DiningTable, Area.Dining, diningState);
+                } else if (diningState.right === Player.color) {
+                    diningState.right = "";
+                    socket.send(JSON.stringify({ type: "dining", data: diningState }));
+                    renderDining(gameCtx, asset, ObjectPos.DiningTable, Area.Dining, diningState);
+                }
+
                 if (data.changeFrame) {
                     data.frame += 1;
                     data.changeFrame = false;
@@ -364,10 +363,13 @@ function renderPlayer(playerState, playerCtx, asset) {
         if (player === Player.userId) {
             continue;
         }
-        renderPlayerHelper(player);
+        if (playerState[player].action !== "interacting") {
+            renderPlayerHelper(player);
+        }
     }
-
-    renderPlayerHelper(Player.userId);
+    if (playerState[Player.userId].action !== "interacting") {
+        renderPlayerHelper(Player.userId);
+    }
 }
 
 /**
