@@ -10,6 +10,8 @@
  * diningBluePink: HTMLImageElement[],
  * diningPinkBlue: HTMLImageElement[],
  * background: HTMLImageElement[]
+ * ferrisEmpty: HTMLImageElement[],
+ * ferris: HTMLImageElement[],
  *}} Asset
  * @typedef {{ color: string, action: string, target: string, x: number, y: number, frame: number, changeFrame: boolean, facing: string}} State
  * @typedef { Object<string, State>} PlayerState
@@ -23,6 +25,8 @@ const GameConfig = {
     canvasWidth: 2496,
     canvasHeight: 2496 * (3 / 5),
     startingPos: { x: 2200, y: 1300 },
+    playerHeight: 64,
+    playerWidth: 64,
 };
 
 window.addEventListener(
@@ -130,7 +134,7 @@ function main(asset) {
     }
     const playerCtx = initialPlayerCtx;
 
-    const socket = new WebSocket("ws://192.168.1.105:1205/ws");
+    const socket = new WebSocket("ws://localhost:1205/ws");
 
     const Area = {
         Dining: { x: 0, y: 992, w: 727, h: 504 },
@@ -161,6 +165,7 @@ function main(asset) {
      */
     const playerState = {};
     const diningState = { left: "", right: "" };
+    const ferrisState = { current: 0, cycle: 0, players: 0 };
     socket.onmessage = (event) => {
         const serverMessage = JSON.parse(event.data);
         switch (serverMessage.type) {
@@ -243,8 +248,6 @@ function main(asset) {
     const fps = 20;
     const interval = 1000 / fps;
     let lastFrameTime = 0;
-    const playerHeight = 64;
-    const playerWidth = 64;
     let moveVal = 10;
     /**
      * @param {number} timestamp
@@ -291,8 +294,8 @@ function main(asset) {
                 }
             }
 
-            xTranslate = clientWidth / 2 - playerWidth / 2 - data.x;
-            yTranslate = clientHeight / 2 - playerHeight / 2 - data.y;
+            xTranslate = clientWidth / 2 - GameConfig.playerWidth / 2 - data.x;
+            yTranslate = clientHeight / 2 - GameConfig.playerHeight / 2 - data.y;
             playerCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
             gameCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
             canvasBackground.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
@@ -329,6 +332,8 @@ function main(asset) {
             } else {
                 data.frame = 0;
             }
+
+            handleFerrisWheel(gameCtx, asset, Area.FerrisWheel, ferrisState, ObjectPos.FerrisWheel);
             renderPlayer(playerState, playerCtx, asset);
             socket.send(JSON.stringify({ type: "player", data: data }));
         }
@@ -391,10 +396,26 @@ function renderGame(gameCtx, frame, pos, area) {
 /**
  * @param {CanvasRenderingContext2D} gameCtx
  * @param {Asset} asset
- * @param {Pos} pos
  * @param {Dimension} area
+ * @param {{ current: number, cycle: number, players: number }} state
+ * @param {Pos} pos
+}
  */
-function handleFerrisWheel(gameCtx, asset, pos, area) {}
+function handleFerrisWheel(gameCtx, asset, area, state, pos) {
+    if (state.players === 0) {
+        if (state.cycle < 10) {
+            state.cycle++;
+        } else {
+            state.cycle = 0;
+            if (state.current < 2) {
+                state.current++;
+            } else {
+                state.current = 0;
+            }
+            renderGame(gameCtx, asset.ferrisEmpty[state.current], pos, area);
+        }
+    }
+}
 
 /**
  * @param {Pos} pos

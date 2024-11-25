@@ -28,7 +28,7 @@ const obstacles = [
     { x: 465, y: 1329, w: 130, h: 67 },
 
     // ferris wheel area
-    { x: 205, y: 77, w: 557, h: 353 },
+    { x: 205, y: 77, w: 557, h: 405 },
 ];
 // { x: 0, y: 0, w: 0, h: 0 },
 
