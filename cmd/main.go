@@ -1,11 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
 	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
 const xStart = 2200
@@ -18,15 +20,21 @@ var (
 
 	playerStateBroadcast = make(chan *Player)
 	clientInfoBroadcast  = make(chan *ClientConnectionPayload)
-	playerList           = make(map[*Player]bool)
+	diningInfoBroadcast  = make(chan *DiningStatePayload)
 
-	mu sync.Mutex
+	playerList = newPlayerList()
 )
+
+type PlayerList struct {
+	pList map[*Player]bool
+	mu    sync.Mutex
+}
 
 type Player struct {
 	conn  *websocket.Conn
 	id    string
 	state *State
+	mu    sync.Mutex
 }
 
 type State struct {
@@ -41,17 +49,23 @@ type State struct {
 }
 
 type StateMessage struct {
-	Type string   `json:"type"`
-	Data *Message `json:"data"`
+	Type string      `json:"type"`
+	Data interface{} `json:"data"`
 }
 
-type Message struct {
+type PlayerMessage struct {
 	Color       string `json:"color"`
 	X           int    `json:"x"`
 	Y           int    `json:"y"`
 	Facing      string `json:"facing"`
 	Frame       int    `json:"frame"`
 	ChangeFrame bool   `json:"changeFrame"`
+	Action      string `json:"action"`
+}
+
+type DiningMessage struct {
+	Left  string `json:"left"`
+	Right string `json:"right"`
 }
 
 type ClientConnectionPayload struct {
@@ -65,17 +79,28 @@ type PlayerStatePayload struct {
 	State *State `json:"state"`
 }
 
+type DiningStatePayload struct {
+	Type  string `json:"type"`
+	Left  string `json:"left"`
+	Right string `json:"right"`
+}
+
 func main() {
 	http.HandleFunc("/ws", handleConnections)
 	go handleMoveBroadcast()
 	go handleDisconnectBroadcast()
+	go handleDiningBroadcast()
 	log.Fatal(http.ListenAndServe(":1205", nil))
+}
+
+func newPlayerList() *PlayerList {
+	return &PlayerList{pList: make(map[*Player]bool)}
 }
 
 func newPlayer(conn *websocket.Conn) *Player {
 	return &Player{
 		conn: conn,
-		id:   fmt.Sprintf("player_%d", len(playerList)+1),
+		id:   fmt.Sprintf("player_%d", len(playerList.pList)+1),
 		state: &State{
 			Action: "idle",
 			X:      xStart,
@@ -93,10 +118,10 @@ func handleConnections(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	mu.Lock()
 	player := newPlayer(conn)
-	playerList[player] = true
-	mu.Unlock()
+	playerList.mu.Lock()
+	playerList.pList[player] = true
+	playerList.mu.Unlock()
 	log.Printf("%v connected\n", player.id)
 
 	playerStatePayload := &PlayerStatePayload{Type: "playerState", Id: player.id, State: player.state}
@@ -111,9 +136,9 @@ func handleMessage(player *Player) {
 	defer func() {
 		player.conn.Close()
 
-		mu.Lock()
-		delete(playerList, player)
-		mu.Unlock()
+		playerList.mu.Lock()
+		delete(playerList.pList, player)
+		playerList.mu.Unlock()
 
 		clientInfoPayload := &ClientConnectionPayload{Type: "disconnected", Id: player.id}
 		clientInfoBroadcast <- clientInfoPayload
@@ -122,7 +147,7 @@ func handleMessage(player *Player) {
 	}()
 
 	playerStateBroadcast <- player
-	for p := range playerList {
+	for p := range playerList.pList {
 		payload := &PlayerStatePayload{Type: "playerState", Id: p.id, State: p.state}
 		err := player.conn.WriteJSON(*payload)
 
@@ -139,15 +164,49 @@ func handleMessage(player *Player) {
 			return
 		}
 
-		if message.Data.Color != "" {
-			player.state.Color = message.Data.Color
+		switch message.Type {
+		case "player":
+			databytes, err := json.Marshal(message.Data)
+			if err != nil {
+				log.Printf("failed to encode json on player message data:\n%v\n", err)
+			}
+
+			var playerMessage PlayerMessage
+			err = json.Unmarshal(databytes, &playerMessage)
+			if err != nil {
+				log.Printf("failed to decode player message data:\n%v\n", err)
+			}
+
+			if playerMessage.Color != "" {
+				player.state.Color = playerMessage.Color
+			}
+			player.state.X = playerMessage.X
+			player.state.Y = playerMessage.Y
+			player.state.Facing = playerMessage.Facing
+			player.state.Frame = playerMessage.Frame
+			player.state.ChangeFrame = playerMessage.ChangeFrame
+			player.state.Action = playerMessage.Action
+
+		case "dining":
+			databytes, err := json.Marshal(message.Data)
+			if err != nil {
+				log.Printf("failed to encode on dining data:\n%v\n", err)
+			}
+
+			var diningMessage DiningMessage
+			err = json.Unmarshal(databytes, &diningMessage)
+			if err != nil {
+				log.Printf("failed to decode dining message data:\n%v\n", err)
+			}
+
+			diningStatePayload := &DiningStatePayload{
+				Type:  "diningState",
+				Left:  diningMessage.Left,
+				Right: diningMessage.Right,
+			}
+			log.Println(diningStatePayload)
+			diningInfoBroadcast <- diningStatePayload
 		}
-		player.state.X = message.Data.X
-		player.state.Y = message.Data.Y
-		player.state.Facing = message.Data.Facing
-		player.state.Frame = message.Data.Frame
-		player.state.ChangeFrame = message.Data.ChangeFrame
-		player.state.Action = message.Type
 
 		playerStateBroadcast <- player
 	}
@@ -158,17 +217,19 @@ func handleMoveBroadcast() {
 	for {
 		player := <-playerStateBroadcast
 
-		for p := range playerList {
+		for p := range playerList.pList {
 			payload := &PlayerStatePayload{Type: "playerState", Id: player.id, State: player.state}
-			log.Println(payload.Type, payload.Id, payload.State)
+			// log.Println(payload.Type, payload.Id, payload.State)
+			p.mu.Lock()
 			err := p.conn.WriteJSON(*payload)
+			p.mu.Unlock()
 
 			if err != nil {
 				log.Printf("%v failed to update\n", err)
 				p.conn.Close()
-				mu.Lock()
-				delete(playerList, p)
-				mu.Unlock()
+				playerList.mu.Lock()
+				delete(playerList.pList, p)
+				playerList.mu.Unlock()
 			}
 
 		}
@@ -178,10 +239,28 @@ func handleMoveBroadcast() {
 func handleDisconnectBroadcast() {
 	for {
 		clientInfo := <-clientInfoBroadcast
-		for p := range playerList {
+		for p := range playerList.pList {
+			p.mu.Lock()
 			err := p.conn.WriteJSON(*clientInfo)
+			p.mu.Unlock()
 			if err != nil {
 				log.Printf("failed to %v %v\n", clientInfo.Type, clientInfo.Id)
+				// todo error handle
+			}
+		}
+	}
+}
+
+func handleDiningBroadcast() {
+	for {
+		diningInfo := <-diningInfoBroadcast
+		for p := range playerList.pList {
+			log.Println(diningInfo)
+			p.mu.Lock()
+			err := p.conn.WriteJSON(*diningInfo)
+			p.mu.Unlock()
+			if err != nil {
+				log.Printf("failed to send dining info to %v\n:%v\n", p.id, err)
 				// todo error handle
 			}
 		}

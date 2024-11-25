@@ -13,8 +13,8 @@
  *}} Asset
  * @typedef {{ color: string, action: string, target: string, x: number, y: number, frame: number, changeFrame: boolean, facing: string}} State
  * @typedef { Object<string, State>} PlayerState
- * @typedef {{x: number, y: number, facing: string, frame: number, changeFrame: boolean}} Data
- * @typedef {{x: number, y: number, w: number, h: number}} Area
+ * @typedef {{x: number, y: number, facing: string, frame: number, changeFrame: boolean, action: string}} Data
+ * @typedef {{x: number, y: number, w: number, h: number}} Dimension
  * @typedef {{x: number, y: number}} Pos
  */
 
@@ -25,7 +25,7 @@ const GameConfig = {
     startingPos: { x: 2200, y: 1300 },
 };
 
-document.addEventListener("DOMContentLoaded", async function() {
+document.addEventListener("DOMContentLoaded", async function () {
     const fetchLoad = document.getElementById("fetch-load");
     if (!(fetchLoad instanceof HTMLParagraphElement)) {
         throw new Error("cannot find fetch load element");
@@ -81,6 +81,22 @@ function main(asset) {
     function clientDimension(canvasContainer) {
         clientWidth = window.innerWidth - 20;
         clientHeight = clientWidth * aspectRatio;
+        if (clientHeight > 1080) {
+            clientHeight = 1080;
+        }
+        if (clientHeight > GameConfig.canvasHeight) {
+            clientHeight = GameConfig.canvasHeight;
+        }
+        if (clientWidth > 1920) {
+            clientWidth = 1920;
+        }
+        if (clientWidth > GameConfig.canvasWidth) {
+            clientWidth = GameConfig.canvasWidth;
+        }
+        if (window.innerHeight < clientHeight) {
+            clientHeight = window.innerHeight - 20;
+            clientWidth = clientHeight * (16 / 9);
+        }
         canvasContainer.style.height = `${clientHeight}px`;
         canvasContainer.style.width = `${clientWidth}px`;
     }
@@ -103,15 +119,24 @@ function main(asset) {
 
     const socket = new WebSocket("ws://192.168.1.105:1205/ws");
 
+    const Area = {
+        Dining: { x: 0, y: 992, w: 727, h: 504 },
+        FerrisWheel: { x: 0, y: 0, w: 762, h: 430 },
+        Lake: { x: 1257, y: 0, w: 867, h: 314 },
+    };
+    const ObjectPos = {
+        DiningTable: { x: 404, y: 1309 },
+    };
+
     socket.onopen = () => {
         socket.send(
             JSON.stringify({
-                type: "",
+                type: "player",
                 data: {
+                    color: Player.color,
                     x: GameConfig.startingPos.x,
                     y: GameConfig.startingPos.y,
                     facing: "left",
-                    color: Player.color,
                 },
             })
         );
@@ -121,6 +146,7 @@ function main(asset) {
      * @type {PlayerState}
      */
     const playerState = {};
+    const diningState = { left: "", right: "" };
     socket.onmessage = (event) => {
         const serverMessage = JSON.parse(event.data);
         switch (serverMessage.type) {
@@ -133,6 +159,20 @@ function main(asset) {
             case "disconnected":
                 const disconnectedP = serverMessage.id;
                 delete playerState[disconnectedP];
+                break;
+            case "diningState":
+                diningState.left = serverMessage.left;
+                diningState.right = serverMessage.right;
+                renderDining(
+                    gameCtx,
+                    asset,
+                    {
+                        x: ObjectPos.DiningTable.x,
+                        y: ObjectPos.DiningTable.y,
+                    },
+                    Area.Dining,
+                    diningState
+                );
                 break;
         }
     };
@@ -175,17 +215,11 @@ function main(asset) {
         facing: "",
         frame: 0,
         changeFrame: false,
+        action: "",
     };
     let xTranslate = 0;
     let yTranslate = 0;
-    const Area = {
-        Dining: { x: 0, y: 992, w: 727, h: 504 },
-        FerrisWheel: { x: 0, y: 0, w: 762, h: 430 },
-        Lake: { x: 1257, y: 0, w: 867, h: 314 },
-    };
-    const ObjectPos = {
-        DiningTable: { x: 404, y: 1309 },
-    };
+
     gameCanvas.addEventListener("click", (event) => {
         const click = {
             x: event.offsetX,
@@ -193,9 +227,8 @@ function main(asset) {
         };
 
         if (isWithinArea(data, Area.Dining)) {
-            handleDining(
+            handleDiningClick(
                 gameCtx,
-                gameCanvas,
                 asset,
                 click,
                 data,
@@ -203,7 +236,9 @@ function main(asset) {
                     x: ObjectPos.DiningTable.x,
                     y: ObjectPos.DiningTable.y,
                 },
-                Area.Dining
+                Area.Dining,
+                socket,
+                diningState
             );
         } else if (isWithinArea(data, Area.FerrisWheel)) {
         } else if (isWithinArea(data, Area.Lake)) {
@@ -240,6 +275,7 @@ function main(asset) {
         data.facing = playerState[Player.userId].facing;
         data.frame = playerState[Player.userId].frame;
         data.changeFrame = playerState[Player.userId].changeFrame;
+        data.action = playerState[Player.userId].action;
 
         if (elapsed > interval) {
             if (keys.w && validMove(data.x, data.y - moveVal)) {
@@ -290,7 +326,7 @@ function main(asset) {
                 data.frame = 0;
             }
             renderPlayer(playerState, playerCtx, asset);
-            socket.send(JSON.stringify({ type: "move", data: data }));
+            socket.send(JSON.stringify({ type: "player", data: data }));
         }
         requestAnimationFrame(gameLoop);
     }
@@ -338,7 +374,7 @@ function renderPlayer(playerState, playerCtx, asset) {
  * @param {CanvasRenderingContext2D} gameCtx
  * @param {HTMLImageElement} frame
  * @param {Pos} pos
- * @param {Area} area
+ * @param {Dimension} area
  */
 function renderGame(gameCtx, frame, pos, area) {
     gameCtx.clearRect(area.x, area.y, area.w, area.h);
@@ -346,33 +382,8 @@ function renderGame(gameCtx, frame, pos, area) {
 }
 
 /**
- * @param {CanvasRenderingContext2D} gameCtx
- * @param {HTMLCanvasElement} gameCanvas
- * @param {Asset} asset
- * @param {Pos} click
- * @param {Data} data
- * @param {Pos} tablePos
- * @param {Area} area
- */
-function handleDining(gameCtx, gameCanvas, asset, click, data, tablePos, area) {
-    const Chair = {
-        left: { x: 398, y: 1325, w: 79, h: 78 },
-        right: { x: 595, y: 1325, w: 79, h: 78 },
-    };
-
-    if (isWithinArea(click, Chair.left) && isWithinArea({ x: data.x, y: data.y }, Chair.left)) {
-        renderGame(gameCtx, asset.diningBlue[0], tablePos, area);
-    } else if (
-        isWithinArea(click, Chair.right) &&
-        isWithinArea({ x: data.x, y: data.y }, Chair.right)
-    ) {
-        console.log("right");
-    }
-}
-
-/**
  * @param {Pos} pos
- * @param {Area} area
+ * @param {Dimension} area
  * @returns {boolean}
  */
 function isWithinArea(pos, area) {
