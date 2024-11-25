@@ -4,6 +4,7 @@ function playerSelect() {
         if (!(playerSelectMenu instanceof HTMLDivElement)) {
             throw new Error("did not found player select menu");
         }
+        playerSelectMenu.style.display = "flex";
         playerSelectMenu.hidden = false;
 
         const blueOption = document.getElementById("player-select--blue");

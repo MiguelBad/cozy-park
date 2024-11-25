@@ -23,7 +23,6 @@ body {
     min-width: 800px;
     max-width: 1920;
     aspect-ratio: 16/9;
-    display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
@@ -86,7 +85,6 @@ body {
 
 #ferris-wheel-menu--container {
     position: absolute;
-    display: flex;
     flex-direction: column;
     bottom: 50px;
     z-index: 4;

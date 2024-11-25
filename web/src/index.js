@@ -89,6 +89,24 @@ function main(asset) {
     }
     const gameCanvas = initialGameCanvas;
 
+    const initialGameCtx = gameCanvas.getContext("2d");
+    if (!(initialGameCtx instanceof CanvasRenderingContext2D)) {
+        throw new Error("failed to create canvas context");
+    }
+    const gameCtx = initialGameCtx;
+
+    const initialPlayerCtx = playerCanvas.getContext("2d");
+    if (!(initialPlayerCtx instanceof CanvasRenderingContext2D)) {
+        throw new Error("failed to create canvas context");
+    }
+    const playerCtx = initialPlayerCtx;
+
+    const initialFerrisMenu = document.getElementById("ferris-wheel-menu--container");
+    if (!(initialFerrisMenu instanceof HTMLDivElement)) {
+        throw new Error("failed to find ferris menu element");
+    }
+    const ferrisMenu = initialFerrisMenu;
+
     let clientWidth = window.innerWidth - 20;
     const aspectRatio = 9 / 16;
     let clientHeight = clientWidth * aspectRatio;
@@ -122,20 +140,6 @@ function main(asset) {
     });
     clientDimension(canvasContainer);
 
-    const initialGameCtx = gameCanvas.getContext("2d");
-    if (!(initialGameCtx instanceof CanvasRenderingContext2D)) {
-        throw new Error("failed to create canvas context");
-    }
-    const gameCtx = initialGameCtx;
-
-    const initialPlayerCtx = playerCanvas.getContext("2d");
-    if (!(initialPlayerCtx instanceof CanvasRenderingContext2D)) {
-        throw new Error("failed to create canvas context");
-    }
-    const playerCtx = initialPlayerCtx;
-
-    const socket = new WebSocket("ws://localhost:1205/ws");
-
     const Area = {
         Dining: { x: 0, y: 992, w: 727, h: 504 },
         FerrisWheel: { x: 0, y: 0, w: 762, h: 736 },
@@ -146,6 +150,7 @@ function main(asset) {
         FerrisWheel: { x: 250, y: 77 },
     };
 
+    const socket = new WebSocket("ws://localhost:1205/ws");
     socket.onopen = () => {
         socket.send(
             JSON.stringify({
@@ -239,6 +244,8 @@ function main(asset) {
                 diningState
             );
         } else if (isWithinArea(data, Area.FerrisWheel)) {
+            ferrisMenu.style.display = "flex";
+            ferrisMenu.hidden = false;
         } else if (isWithinArea(data, Area.Lake)) {
         }
     });
@@ -333,7 +340,17 @@ function main(asset) {
                 data.frame = 0;
             }
 
-            handleFerrisWheel(gameCtx, asset, Area.FerrisWheel, ferrisState, ObjectPos.FerrisWheel);
+            if (!isWithinArea({ x: data.x, y: data.y }, Area.FerrisWheel)) {
+                ferrisMenu.style.display = "none";
+            }
+            handleFerrisWheelClick(
+                gameCtx,
+                asset,
+                Area.FerrisWheel,
+                ferrisState,
+                ObjectPos.FerrisWheel
+            );
+
             renderPlayer(playerState, playerCtx, asset);
             socket.send(JSON.stringify({ type: "player", data: data }));
         }
@@ -401,7 +418,7 @@ function renderGame(gameCtx, frame, pos, area) {
  * @param {Pos} pos
 }
  */
-function handleFerrisWheel(gameCtx, asset, area, state, pos) {
+function handleFerrisWheelClick(gameCtx, asset, area, state, pos) {
     if (state.players === 0) {
         if (state.cycle < 10) {
             state.cycle++;
