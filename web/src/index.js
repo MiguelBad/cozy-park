@@ -25,6 +25,19 @@ const GameConfig = {
     startingPos: { x: 2200, y: 1300 },
 };
 
+window.addEventListener(
+    "wheel",
+    (event) => {
+        if (event.ctrlKey) {
+            event.preventDefault();
+        }
+    },
+    { passive: false }
+);
+document.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+});
+
 document.addEventListener("DOMContentLoaded", async function () {
     const fetchLoad = document.getElementById("fetch-load");
     if (!(fetchLoad instanceof HTMLParagraphElement)) {
@@ -121,11 +134,12 @@ function main(asset) {
 
     const Area = {
         Dining: { x: 0, y: 992, w: 727, h: 504 },
-        FerrisWheel: { x: 0, y: 0, w: 762, h: 430 },
+        FerrisWheel: { x: 0, y: 0, w: 762, h: 736 },
         Lake: { x: 1257, y: 0, w: 867, h: 314 },
     };
     const ObjectPos = {
         DiningTable: { x: 404, y: 1309 },
+        FerrisWheel: { x: 250, y: 77 },
     };
 
     socket.onopen = () => {
@@ -187,15 +201,6 @@ function main(asset) {
             keys[key] = false;
         }
     });
-    window.addEventListener(
-        "wheel",
-        (event) => {
-            if (event.ctrlKey) {
-                event.preventDefault();
-            }
-        },
-        { passive: false }
-    );
 
     /**
      * @type {Data}
@@ -382,6 +387,14 @@ function renderGame(gameCtx, frame, pos, area) {
     gameCtx.clearRect(area.x, area.y, area.w, area.h);
     gameCtx.drawImage(frame, pos.x, pos.y);
 }
+
+/**
+ * @param {CanvasRenderingContext2D} gameCtx
+ * @param {Asset} asset
+ * @param {Pos} pos
+ * @param {Dimension} area
+ */
+function handleFerrisWheel(gameCtx, asset, pos, area) {}
 
 /**
  * @param {Pos} pos

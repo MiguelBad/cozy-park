@@ -9,7 +9,9 @@
  * diningPink: HTMLImageElement[],
  * diningBluePink: HTMLImageElement[],
  * diningPinkBlue: HTMLImageElement[],
- * background: HTMLImageElement[]
+ * background: HTMLImageElement[],
+ * ferrisEmpty: HTMLImageElement[],
+ * ferris: HTMLImageElement[],
  * }>}
  */
 async function fetchAsset() {
@@ -40,6 +42,19 @@ async function fetchAsset() {
         diningBluePink: ["assets/dining/dining-blue-pink.png"],
         diningPinkBlue: ["assets/dining/dining-pink-blue.png"],
         background: ["assets/bg/canvas-bg.png"],
+        ferrisEmpty: [
+            "assets/ferris-wheel/ferris-empty-1.png",
+            "assets/ferris-wheel/ferris-empty-2.png",
+            "assets/ferris-wheel/ferris-empty-3.png",
+        ],
+        ferris: [
+            "assets/ferris-wheel/ferris-1.png",
+            "assets/ferris-wheel/ferris-2.png",
+            "assets/ferris-wheel/ferris-3.png",
+            "assets/ferris-wheel/ferris-4.png",
+            "assets/ferris-wheel/ferris-5.png",
+            "assets/ferris-wheel/ferris-6.png",
+        ],
     };
 
     /**
@@ -54,6 +69,8 @@ async function fetchAsset() {
      * diningBluePink: HTMLImageElement[],
      * diningPinkBlue: HTMLImageElement[],
      * background: HTMLImageElement[]
+     * ferrisEmpty: HTMLImageElement[],
+     * ferris: HTMLImageElement[],
      * }}
      */
     const preloaded = {
@@ -67,6 +84,8 @@ async function fetchAsset() {
         diningBluePink: [],
         diningPinkBlue: [],
         background: [],
+        ferrisEmpty: [],
+        ferris: [],
     };
 
     await preloadImages(path.blueWalkLeft, preloaded.blueWalkLeft);
@@ -79,6 +98,8 @@ async function fetchAsset() {
     await preloadImages(path.diningBluePink, preloaded.diningBluePink);
     await preloadImages(path.diningPinkBlue, preloaded.diningPinkBlue);
     await preloadImages(path.background, preloaded.background);
+    await preloadImages(path.ferrisEmpty, preloaded.ferrisEmpty);
+    await preloadImages(path.ferris, preloaded.ferris);
 
     return preloaded;
 }
