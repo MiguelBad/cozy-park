@@ -5,10 +5,10 @@
  * @param {Data} data
  * @param {Pos} tablePos
  * @param {Dimension} area
- * @param {WebSocket} socket
  * @param {{left: string, right: string}} diningState
+ * @param {WebSocket} socket
  */
-function handleDiningClick(gameCtx, asset, click, data, tablePos, area, socket, diningState) {
+function handleDiningClick(gameCtx, asset, click, data, tablePos, area, diningState, socket) {
     const Chair = {
         left: { x: 398, y: 1325, w: 79, h: 78 },
         right: { x: 595, y: 1325, w: 79, h: 78 },

@@ -12,6 +12,7 @@
  * background: HTMLImageElement[],
  * ferrisEmpty: HTMLImageElement[],
  * ferris: HTMLImageElement[],
+ * ferrisMenu: HTMLImageElement[],
  * }>}
  */
 async function fetchAsset() {
@@ -55,6 +56,10 @@ async function fetchAsset() {
             "assets/ferris-wheel/ferris-5.png",
             "assets/ferris-wheel/ferris-6.png",
         ],
+        ferrisMenu: [
+            "assets/ferris-wheel/ferris-exit.png",
+            "assets/ferris-wheel/ferris-menu-background.png",
+        ],
     };
 
     /**
@@ -71,6 +76,7 @@ async function fetchAsset() {
      * background: HTMLImageElement[]
      * ferrisEmpty: HTMLImageElement[],
      * ferris: HTMLImageElement[],
+     * ferrisMenu: HTMLImageElement[],
      * }}
      */
     const preloaded = {
@@ -86,6 +92,7 @@ async function fetchAsset() {
         background: [],
         ferrisEmpty: [],
         ferris: [],
+        ferrisMenu: [],
     };
 
     await preloadImages(path.blueWalkLeft, preloaded.blueWalkLeft);
@@ -100,6 +107,7 @@ async function fetchAsset() {
     await preloadImages(path.background, preloaded.background);
     await preloadImages(path.ferrisEmpty, preloaded.ferrisEmpty);
     await preloadImages(path.ferris, preloaded.ferris);
+    await preloadImages(path.ferrisMenu, preloaded.ferrisMenu);
 
     return preloaded;
 }

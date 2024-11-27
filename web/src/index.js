@@ -12,6 +12,7 @@
  * background: HTMLImageElement[]
  * ferrisEmpty: HTMLImageElement[],
  * ferris: HTMLImageElement[],
+ * ferrisMenu: HTMLImageElement[],
  *}} Asset
  * @typedef {{ color: string, action: string, target: string, x: number, y: number, frame: number, changeFrame: boolean, facing: string}} State
  * @typedef { Object<string, State>} PlayerState
@@ -28,6 +29,8 @@ const GameConfig = {
     startingPos: { x: 2200, y: 1300 },
     playerHeight: 64,
     playerWidth: 64,
+    standardMoveVal: 20,
+    offMovement: 0,
 };
 
 window.addEventListener(
@@ -43,7 +46,7 @@ document.addEventListener("contextmenu", (event) => {
     event.preventDefault();
 });
 
-document.addEventListener("DOMContentLoaded", async function () {
+document.addEventListener("DOMContentLoaded", async function() {
     const fetchLoad = document.getElementById("fetch-load");
     if (!(fetchLoad instanceof HTMLParagraphElement)) {
         throw new Error("cannot find fetch load element");
@@ -77,6 +80,7 @@ function main(asset) {
         throw new Error("cannot find game canvas background element");
     }
     const canvasBackground = initialCanvasBackground;
+    canvasBackground.style.backgroundImage = "url(assets/bg/canvas-bg.png)";
 
     const initialPlayerCanvas = document.getElementById("player-canvas");
     if (!(initialPlayerCanvas instanceof HTMLCanvasElement)) {
@@ -107,12 +111,20 @@ function main(asset) {
         throw new Error("failed to find ferris menu element");
     }
     const ferrisMenu = initialFerrisMenu;
+    ferrisMenu.style.backgroundImage = "url(assets/ferris-wheel/ferris-menu-background.png)";
 
     const initialFerrisCancel = document.getElementById("ferris-wheel-menu--cancel");
     if (!(initialFerrisCancel instanceof HTMLParagraphElement)) {
         throw new Error("failed to find cancel on ferris wheel menu");
     }
     const ferrisCancel = initialFerrisCancel;
+
+    const initialFerrisExit = document.getElementById("ferris-wheel--exit");
+    if (!(initialFerrisExit instanceof HTMLParagraphElement)) {
+        throw new Error("failed to find cancel on ferris wheel exit button");
+    }
+    const ferrisExit = initialFerrisExit;
+    ferrisExit.style.backgroundImage = "url(assets/ferris-wheel/ferris-exit.png)";
 
     let clientWidth = window.innerWidth - 20;
     const aspectRatio = 9 / 16;
@@ -228,7 +240,7 @@ function main(asset) {
     });
 
     ferrisCancel.addEventListener("click", () => {
-        handleFerrisCancel(ferrisState, ferrisMenu);
+        handleFerrisCancel(ferrisState, ferrisMenu, socket);
     });
 
     /**
@@ -259,8 +271,8 @@ function main(asset) {
                 data,
                 ObjectPos.DiningTable,
                 Area.Dining,
-                socket,
-                diningState
+                diningState,
+                socket
             );
         } else if (isWithinArea(data, Area.FerrisWheel)) {
             handleFerrisWheelClick(
@@ -269,7 +281,8 @@ function main(asset) {
                 ObjectPos.FerrisWheel,
                 Area.FerrisWheel,
                 ferrisState,
-                ferrisMenu
+                ferrisMenu,
+                socket
             );
         } else if (isWithinArea(data, Area.Lake)) {
         }
@@ -280,7 +293,7 @@ function main(asset) {
     const fps = 20;
     const interval = 1000 / fps;
     let lastFrameTime = 0;
-    let moveVal = 20;
+    let moveVal = GameConfig.standardMoveVal;
     /**
      * @param {number} timestamp
      */
@@ -298,14 +311,20 @@ function main(asset) {
             return;
         }
 
-        data.x = playerState[Player.userId].x;
-        data.y = playerState[Player.userId].y;
-        data.facing = playerState[Player.userId].facing;
-        data.frame = playerState[Player.userId].frame;
-        data.changeFrame = playerState[Player.userId].changeFrame;
-        data.action = playerState[Player.userId].action;
-
         if (elapsed > interval) {
+            data.x = playerState[Player.userId].x;
+            data.y = playerState[Player.userId].y;
+            data.facing = playerState[Player.userId].facing;
+            data.frame = playerState[Player.userId].frame;
+            data.changeFrame = playerState[Player.userId].changeFrame;
+            data.action = playerState[Player.userId].action;
+
+            if (ferrisState.players.length === 2) {
+                moveVal = GameConfig.offMovement;
+            } else {
+                moveVal = GameConfig.standardMoveVal;
+            }
+
             if (keys.w && validMove(data.x, data.y - moveVal)) {
                 data.y -= moveVal;
             }
@@ -328,11 +347,18 @@ function main(asset) {
 
             xTranslate = clientWidth / 2 - GameConfig.playerWidth / 2 - data.x;
             yTranslate = clientHeight / 2 - GameConfig.playerHeight / 2 - data.y;
+            if (ferrisState.players.length === 2) {
+                xTranslate = clientWidth / 2 - Area.FerrisWheel.w / 2;
+                yTranslate = clientHeight / 2 - Area.FerrisWheel.h / 2;
+            }
             playerCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
             gameCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
             canvasBackground.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
 
-            const walking = movementKeys.some((key) => keys[key]);
+            let walking = false;
+            if (ferrisState.players.length < 2) {
+                walking = movementKeys.some((key) => keys[key]);
+            }
             if (walking) {
                 data.action = "move";
                 if (diningState.left === Player.color) {
@@ -368,7 +394,12 @@ function main(asset) {
                 ferrisState.players.some((p) => p === Player.userId) &&
                 !isWithinArea({ x: data.x, y: data.y }, Area.FerrisWheel)
             ) {
-                handleFerrisCancel(ferrisState, ferrisMenu);
+                handleFerrisCancel(ferrisState, ferrisMenu, socket);
+            }
+            ferrisExit.style.display = "none";
+            if (ferrisState.players.length === 2) {
+                ferrisMenu.style.display = "none";
+                ferrisExit.style.display = "flex";
             }
 
             renderFerrisWheel(gameCtx, asset, ObjectPos.FerrisWheel, Area.FerrisWheel, ferrisState);

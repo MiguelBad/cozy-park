@@ -29,7 +29,7 @@ var (
 	ferrisInfoBroadcast  = make(chan *FerrisStatePayload)
 
 	playerList  = newPlayerList()
-	ferrisState = &FerrisState{}
+	ferrisState = &FerrisState{players: []string{}}
 )
 
 type PlayerList struct {
@@ -341,6 +341,7 @@ func handleFerrisBroadcast() {
 
 func handleFerrisState() {
 	lastTime := time.Now()
+	maxFrames := 2
 	for {
 		currentTime := time.Now()
 		elapsed := currentTime.Sub(lastTime).Milliseconds()
@@ -351,7 +352,13 @@ func handleFerrisState() {
 				ferrisState.cycle++
 			} else {
 				ferrisState.cycle = 0
-				if ferrisState.frame < 2 {
+				if len(ferrisState.players) == 2 {
+					maxFrames = 5
+				} else {
+					maxFrames = 2
+				}
+
+				if ferrisState.frame < maxFrames {
 					ferrisState.frame++
 				} else {
 					ferrisState.frame = 0
@@ -365,6 +372,12 @@ func handleFerrisState() {
 				Frame:   ferrisState.frame,
 			}
 			ferrisInfoBroadcast <- ferrisStatePayload
+			if len(ferrisState.players) >= 2 {
+				for p := range playerList.pList {
+					p.state.Action = "ferris"
+					playerStateBroadcast <- p
+				}
+			}
 			lastTime = currentTime
 		}
 
