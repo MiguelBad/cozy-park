@@ -47,7 +47,7 @@ document.addEventListener("contextmenu", (event) => {
     event.preventDefault();
 });
 
-document.addEventListener("DOMContentLoaded", async function() {
+document.addEventListener("DOMContentLoaded", async function () {
     const fetchLoad = document.getElementById("fetch-load");
     if (!(fetchLoad instanceof HTMLParagraphElement)) {
         throw new Error("cannot find fetch load element");
@@ -169,6 +169,7 @@ function main(asset) {
         DiningTable: { x: 404, y: 1309 },
         FerrisWheel: { x: 250, y: 77 },
         LakeWaves: { x: 1798, y: -38 },
+        Bench: { x: 279, y: 157 },
     };
 
     const socket = new WebSocket("ws://localhost:1205/ws");

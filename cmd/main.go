@@ -181,9 +181,9 @@ func handleMessage(player *Player) {
 	playerStateBroadcast <- player
 	for p := range playerList.pList {
 		payload := &PlayerStatePayload{Type: "playerState", Id: p.id, State: p.state}
-        player.mu.Lock()
+		player.mu.Lock()
 		err := player.conn.WriteJSON(*payload)
-        player.mu.Unlock()
+		player.mu.Unlock()
 
 		if err != nil {
 			log.Printf("Failed to update %v's state on %v\n", p.id, player.id)
