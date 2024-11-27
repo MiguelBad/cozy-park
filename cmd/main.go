@@ -100,9 +100,9 @@ type DiningStatePayload struct {
 }
 
 type FerrisStatePayload struct {
-	Type      string `json:"type"`
-	Frame     int    `json:"frame"`
-	PlayerNum int    `json:"playerNum"`
+	Type    string   `json:"type"`
+	Frame   int      `json:"frame"`
+	Players []string `json:"players"`
 }
 
 type FerrisState struct {
@@ -360,9 +360,9 @@ func handleFerrisState() {
 			ferrisState.mu.Unlock()
 
 			ferrisStatePayload := &FerrisStatePayload{
-				Type:      "ferrisState",
-				PlayerNum: len(ferrisState.players) + 1,
-				Frame:     ferrisState.frame,
+				Type:    "ferrisState",
+				Players: ferrisState.players,
+				Frame:   ferrisState.frame,
 			}
 			ferrisInfoBroadcast <- ferrisStatePayload
 			lastTime = currentTime
