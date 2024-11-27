@@ -226,6 +226,11 @@ function main(asset) {
                 ferrisState.frame = serverMessage.frame;
                 ferrisState.players = serverMessage.players;
                 break;
+            case "benchState":
+                benchState.right = serverMessage.right;
+                benchState.left = serverMessage.left;
+                renderBench(gameCtx, asset, ObjectPos.Bench, Area.Bench, benchState);
+                break;
         }
     };
 
@@ -298,10 +303,21 @@ function main(asset) {
                 socket
             );
         } else if (isWithinArea(data, Area.Bench)) {
+            handleBenchClick(
+                gameCtx,
+                asset,
+                ObjectPos.Bench,
+                Area.Bench,
+                benchState,
+                socket,
+                click,
+                data
+            );
         }
     });
 
     renderDining(gameCtx, asset, ObjectPos.DiningTable, Area.Dining, diningState);
+    renderBench(gameCtx, asset, ObjectPos.Bench, Area.Bench, benchState);
 
     const fps = 20;
     const interval = 1000 / fps;
@@ -375,16 +391,6 @@ function main(asset) {
             }
             if (walking) {
                 data.action = "move";
-                if (diningState.left === Player.color) {
-                    diningState.left = "";
-                    socket.send(JSON.stringify({ type: "dining", data: diningState }));
-                    renderDining(gameCtx, asset, ObjectPos.DiningTable, Area.Dining, diningState);
-                } else if (diningState.right === Player.color) {
-                    diningState.right = "";
-                    socket.send(JSON.stringify({ type: "dining", data: diningState }));
-                    renderDining(gameCtx, asset, ObjectPos.DiningTable, Area.Dining, diningState);
-                }
-
                 if (data.changeFrame) {
                     data.frame += 1;
                     data.changeFrame = false;
@@ -400,6 +406,16 @@ function main(asset) {
                 ) {
                     data.frame = 0;
                 }
+
+                handleDiningMove(
+                    gameCtx,
+                    asset,
+                    ObjectPos.DiningTable,
+                    Area.Dining,
+                    diningState,
+                    socket
+                );
+                handleBenchMove(gameCtx, asset, ObjectPos.Bench, Area.Bench, benchState, socket);
             } else {
                 data.frame = 0;
             }
@@ -416,7 +432,6 @@ function main(asset) {
                 ferrisExit.style.display = "flex";
             }
 
-            renderBench(gameCtx, asset, ObjectPos.Bench, Area.Bench, benchState);
             renderWaves(gameCtx, asset, ObjectPos.LakeWaves, Area.Lake1, Area.Lake2, waveState);
             renderFerrisWheel(gameCtx, asset, ObjectPos.FerrisWheel, Area.FerrisWheel, ferrisState);
             renderPlayer(playerState, playerCtx, asset);

@@ -27,6 +27,7 @@ var (
 	clientInfoBroadcast  = make(chan *ClientConnectionPayload)
 	diningInfoBroadcast  = make(chan *DiningStatePayload)
 	ferrisInfoBroadcast  = make(chan *FerrisStatePayload)
+	benchInfoBroadcast   = make(chan *BenchStatePayload)
 
 	playerList  = newPlayerList()
 	ferrisState = &FerrisState{players: []string{}}
@@ -82,6 +83,11 @@ type FerrisMessage struct {
 	Player  string `json:"player"`
 }
 
+type BenchMessage struct {
+	Left  string `json:"left"`
+	Right string `json:"right"`
+}
+
 type ClientConnectionPayload struct {
 	Type string `json:"type"`
 	Id   string `json:"id"`
@@ -105,6 +111,12 @@ type FerrisStatePayload struct {
 	Players []string `json:"players"`
 }
 
+type BenchStatePayload struct {
+	Type  string `json:"type"`
+	Left  string `json:"left"`
+	Right string `json:"right"`
+}
+
 type FerrisState struct {
 	players []string
 	frame   int
@@ -120,6 +132,7 @@ func main() {
 	go handleDiningBroadcast()
 	go handleFerrisBroadcast()
 	go handleFerrisState()
+	go handleBenchBroadcast()
 	log.Fatal(http.ListenAndServe(":1205", nil))
 }
 
@@ -278,6 +291,25 @@ func handleMessage(player *Player) {
 					}
 				}
 			}
+
+		case "bench":
+			databytes, err := json.Marshal(&message.Data)
+			if err != nil {
+				log.Printf("failed to encode bench info data to json:\n%v\n", err)
+			}
+
+			var benchMessage *BenchMessage
+			err = json.Unmarshal(databytes, &benchMessage)
+			if err != nil {
+				log.Printf("failed to decode bench info json:\n%v\n", err)
+			}
+			benchStatePayload := &BenchStatePayload{
+				Type:  "benchState",
+				Left:  benchMessage.Left,
+				Right: benchMessage.Right,
+			}
+			log.Println(benchStatePayload)
+			benchInfoBroadcast <- benchStatePayload
 		}
 	}
 }
@@ -407,5 +439,20 @@ func handleFerrisState() {
 		}
 
 		time.Sleep(time.Millisecond)
+	}
+}
+
+func handleBenchBroadcast() {
+	for {
+		benchInfo := <-benchInfoBroadcast
+		for p := range playerList.pList {
+			p.mu.Lock()
+			err := p.conn.WriteJSON(*benchInfo)
+			p.mu.Unlock()
+			if err != nil {
+				log.Printf("failed to send bench info to %v\n:%v\n", p.id, err)
+				// todo error handle
+			}
+		}
 	}
 }

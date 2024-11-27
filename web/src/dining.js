@@ -68,3 +68,23 @@ function renderDining(gameCtx, asset, tablePos, area, diningState) {
 
     renderGame(gameCtx, frame, tablePos, area);
 }
+
+/**
+ * @param {{left: string, right: string}} diningState
+ * @param {CanvasRenderingContext2D} gameCtx
+ * @param {Asset} asset
+ * @param {Pos} pos
+ * @param {Dimension} area
+ * @param {WebSocket} socket
+ */
+function handleDiningMove(gameCtx, asset, pos, area, diningState, socket) {
+    if (diningState.left === Player.color) {
+        diningState.left = "";
+        socket.send(JSON.stringify({ type: "dining", data: diningState }));
+        renderDining(gameCtx, asset, pos, area, diningState);
+    } else if (diningState.right === Player.color) {
+        diningState.right = "";
+        socket.send(JSON.stringify({ type: "dining", data: diningState }));
+        renderDining(gameCtx, asset, pos, area, diningState);
+    }
+}

@@ -31,7 +31,64 @@ function renderWaves(gameCtx, asset, pos, area1, area2, waveState) {
 function renderBench(gameCtx, asset, pos, area, benchState) {
     if (!benchState.left && !benchState.right) {
         renderGame(gameCtx, asset.benchEmpty[0], pos, area);
+    } else if (!benchState.left) {
+        renderGame(gameCtx, asset.benchPink[0], pos, area);
+    } else if (!benchState.right) {
+        renderGame(gameCtx, asset.benchBlue[0], pos, area);
+    } else {
+        renderGame(gameCtx, asset.bencheBluePink[0], pos, area);
     }
 }
 
-function handleBenchClick() {}
+/**
+ * @param {CanvasRenderingContext2D} gameCtx
+ * @param {Asset} asset
+ * @param {Pos} pos
+ * @param {Dimension} area
+ * @param {WebSocket} socket
+ * @param {{left: string, right: string}} benchState
+ * @param {Pos} click
+ * @param {Data} data
+ */
+function handleBenchClick(gameCtx, asset, pos, area, benchState, socket, click, data) {
+    const bench = { x: pos.x, y: pos.y, w: 160, h: 90 };
+    if (!(isWithinArea(click, bench) && isWithinArea({ x: data.x, y: data.y }, bench))) {
+        return;
+    }
+    if (benchState.left !== "blue" && Player.color === "blue") {
+        benchState.left = "blue";
+        socket.send(JSON.stringify({ type: "bench", data: benchState }));
+
+        data.action = "bench";
+        socket.send(JSON.stringify({ type: "player", data: data }));
+        renderBench(gameCtx, asset, pos, area, benchState);
+    }
+    if (benchState.right !== "pink" && Player.color === "pink") {
+        benchState.right = "pink";
+        socket.send(JSON.stringify({ type: "bench", data: benchState }));
+
+        data.action = "bench";
+        socket.send(JSON.stringify({ type: "player", data: data }));
+        renderBench(gameCtx, asset, pos, area, benchState);
+    }
+}
+
+/**
+ * @param {{left: string, right: string}} benchState
+ * @param {CanvasRenderingContext2D} gameCtx
+ * @param {Asset} asset
+ * @param {Pos} pos
+ * @param {Dimension} area
+ * @param {WebSocket} socket
+ */
+function handleBenchMove(gameCtx, asset, pos, area, benchState, socket) {
+    if (benchState.left === Player.color) {
+        benchState.left = "";
+        socket.send(JSON.stringify({ type: "bench", data: benchState }));
+        renderBench(gameCtx, asset, pos, area, benchState);
+    } else if (benchState.right === Player.color) {
+        benchState.right = "";
+        socket.send(JSON.stringify({ type: "bench", data: benchState }));
+        renderBench(gameCtx, asset, pos, area, benchState);
+    }
+}
