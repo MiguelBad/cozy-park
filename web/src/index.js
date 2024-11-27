@@ -18,7 +18,7 @@
  * @typedef {{x: number, y: number, facing: string, frame: number, changeFrame: boolean, action: string}} Data
  * @typedef {{x: number, y: number, w: number, h: number}} Dimension
  * @typedef {{x: number, y: number}} Pos
- * @typedef {{ current: number, cycle: number, players: string[] }} FerrisState
+ * @typedef {{ frame: number, cycle: number }} FerrisState
  */
 
 const Player = { userId: "", color: "" };
@@ -184,10 +184,7 @@ function main(asset) {
      */
     const playerState = {};
     const diningState = { left: "", right: "" };
-    /**
-     * @type {{current: number, cycle: number, players: string[]}}
-     */
-    const ferrisState = { current: 0, cycle: 0, players: [] };
+    const ferrisState = { frame: 0, playerNum: 0 };
     socket.onmessage = (event) => {
         const serverMessage = JSON.parse(event.data);
         switch (serverMessage.type) {
@@ -207,7 +204,8 @@ function main(asset) {
                 renderDining(gameCtx, asset, ObjectPos.DiningTable, Area.Dining, diningState);
                 break;
             case "ferrisState":
-                ferrisState.players = serverMessage.players;
+                ferrisState.frame = serverMessage.frame;
+                ferrisState.playerNum = serverMessage.playerNum;
                 break;
         }
     };
@@ -232,9 +230,7 @@ function main(asset) {
         }
     });
 
-    ferrisCancel.addEventListener("click", () => {
-        removeFerrisPlayer(ferrisMenu, ferrisState, socket);
-    });
+    ferrisCancel.addEventListener("click", () => {});
 
     /**
      * @type {Data}
@@ -270,13 +266,6 @@ function main(asset) {
         } else if (isWithinArea(data, Area.FerrisWheel)) {
             ferrisMenu.style.display = "flex";
             ferrisMenu.hidden = false;
-
-            ferrisState.players.push(Player.userId);
-            if (ferrisState.players.length < 2) {
-                ferrisLoading.textContent = `Waiting for (${ferrisState.players.length}/2)players...`;
-            } else {
-            }
-            socket.send(JSON.stringify({ type: "ferris", data: ferrisState }));
         } else if (isWithinArea(data, Area.Lake)) {
         }
     });
@@ -338,7 +327,6 @@ function main(asset) {
             gameCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
             canvasBackground.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
 
-            lastFrameTime = timestamp - (elapsed % interval);
             const walking = movementKeys.some((key) => keys[key]);
             if (walking) {
                 data.action = "move";
@@ -371,22 +359,12 @@ function main(asset) {
                 data.frame = 0;
             }
 
-            if (
-                ferrisState.players.some((p) => p === Player.userId) &&
-                !isWithinArea({ x: data.x, y: data.y }, Area.FerrisWheel)
-            ) {
-                removeFerrisPlayer(ferrisMenu, ferrisState, socket);
-            }
-            handleFerrisWheelClick(
-                gameCtx,
-                asset,
-                Area.FerrisWheel,
-                ferrisState,
-                ObjectPos.FerrisWheel
-            );
+            renderFerrisWheel(gameCtx, asset, ObjectPos.FerrisWheel, Area.FerrisWheel, ferrisState);
 
             renderPlayer(playerState, playerCtx, asset);
             socket.send(JSON.stringify({ type: "player", data: data }));
+
+            lastFrameTime = timestamp - (elapsed % interval);
         }
         requestAnimationFrame(gameLoop);
     }
@@ -450,37 +428,14 @@ function renderGame(gameCtx, frame, pos, area) {
 /**
  * @param {CanvasRenderingContext2D} gameCtx
  * @param {Asset} asset
- * @param {Dimension} area
- * @param {FerrisState} ferrisState
  * @param {Pos} pos
-}
+ * @param {Dimension} area
+ * @param{{frame: number, playerNum: number}} ferrisState
  */
-function handleFerrisWheelClick(gameCtx, asset, area, ferrisState, pos) {
-    console.log(ferrisState.players);
-    if (ferrisState.players.length < 2) {
-        if (ferrisState.cycle < 10) {
-            ferrisState.cycle++;
-        } else {
-            ferrisState.cycle = 0;
-            if (ferrisState.current < 2) {
-                ferrisState.current++;
-            } else {
-                ferrisState.current = 0;
-            }
-            renderGame(gameCtx, asset.ferrisEmpty[ferrisState.current], pos, area);
-        }
+function renderFerrisWheel(gameCtx, asset, pos, area, ferrisState) {
+    if (ferrisState.playerNum < 2) {
+        renderGame(gameCtx, asset.ferrisEmpty[ferrisState.frame], pos, area);
     }
-}
-
-/**
- * @param {HTMLDivElement} ferrisMenu
- * @param {FerrisState} ferrisState
- * @param {WebSocket} socket
- */
-function removeFerrisPlayer(ferrisMenu, ferrisState, socket) {
-    ferrisMenu.style.display = "none";
-    ferrisState.players.splice(ferrisState.players.findIndex((p) => p === Player.userId));
-    socket.send(JSON.stringify({ type: "ferris", data: ferrisState }));
 }
 
 /**

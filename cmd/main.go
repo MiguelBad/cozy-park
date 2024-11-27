@@ -6,12 +6,17 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
 
-const xStart = 2200
-const yStart = 1300
+const (
+	xStart   = 2200
+	yStart   = 1300
+	fps      = 20
+	interval = 1000 / fps
+)
 
 var (
 	upgrader = websocket.Upgrader{
@@ -23,19 +28,22 @@ var (
 	diningInfoBroadcast  = make(chan *DiningStatePayload)
 	ferrisInfoBroadcast  = make(chan *FerrisStatePayload)
 
-	playerList = newPlayerList()
+	playerList  = newPlayerList()
+	ferrisState = &FerrisState{}
 )
 
 type PlayerList struct {
 	pList map[*Player]bool
-	mu    sync.Mutex
+
+	mu sync.Mutex
 }
 
 type Player struct {
 	conn  *websocket.Conn
 	id    string
 	state *State
-	mu    sync.Mutex
+
+	mu sync.Mutex
 }
 
 type State struct {
@@ -70,9 +78,8 @@ type DiningMessage struct {
 }
 
 type FerrisMessage struct {
-	Current int   `json:"current"`
-	Cycle   int   `json:"cycle"`
-	Players []string `json:"players"`
+	DidJoin bool   `json:"didJoin"`
+	Player  string `json:"player"`
 }
 
 type ClientConnectionPayload struct {
@@ -93,10 +100,17 @@ type DiningStatePayload struct {
 }
 
 type FerrisStatePayload struct {
-	Type    string `json:"type"`
-	Current int    `json:"current"`
-	Cycle   int    `json:"cycle"`
-	Players []string  `json:"players"`
+	Type      string `json:"type"`
+	Frame     int    `json:"frame"`
+	PlayerNum int    `json:"playerNum"`
+}
+
+type FerrisState struct {
+	players []string
+	frame   int
+	cycle   int
+
+	mu sync.Mutex
 }
 
 func main() {
@@ -105,6 +119,7 @@ func main() {
 	go handleDisconnectBroadcast()
 	go handleDiningBroadcast()
 	go handleFerrisBroadcast()
+	go handleFerrisState()
 	log.Fatal(http.ListenAndServe(":1205", nil))
 }
 
@@ -202,6 +217,8 @@ func handleMessage(player *Player) {
 			player.state.ChangeFrame = playerMessage.ChangeFrame
 			player.state.Action = playerMessage.Action
 
+			playerStateBroadcast <- player
+
 		case "dining":
 			databytes, err := json.Marshal(message.Data)
 			if err != nil {
@@ -219,7 +236,9 @@ func handleMessage(player *Player) {
 				Left:  diningMessage.Left,
 				Right: diningMessage.Right,
 			}
+
 			diningInfoBroadcast <- diningStatePayload
+
 		case "ferris":
 			databytes, err := json.Marshal(message.Data)
 			if err != nil {
@@ -231,18 +250,24 @@ func handleMessage(player *Player) {
 			if err != nil {
 				log.Printf("failed to decode json on ferris message:\n%v\n", err)
 			}
-
-			ferrisStatePayload := &FerrisStatePayload{
-				Type:    "ferrisState",
-				Cycle:   ferrisMessage.Cycle,
-				Current: ferrisMessage.Current,
-				Players: ferrisMessage.Players,
+			if ferrisMessage.DidJoin {
+				ferrisState.mu.Lock()
+				ferrisState.players = append(ferrisState.players, ferrisMessage.Player)
+				ferrisState.mu.Unlock()
+			} else {
+				idx := -1
+				for i, p := range ferrisState.players {
+					if p == ferrisMessage.Player {
+						idx = i
+					}
+				}
+				if idx > -1 {
+					ferrisState.mu.Lock()
+					ferrisState.players = append(ferrisState.players[:idx], ferrisState.players[idx+1:]...)
+					ferrisState.mu.Unlock()
+				}
 			}
-			log.Println(*ferrisStatePayload)
-			ferrisInfoBroadcast <- ferrisStatePayload
 		}
-
-		playerStateBroadcast <- player
 	}
 }
 
@@ -311,5 +336,38 @@ func handleFerrisBroadcast() {
 				// todo error handle
 			}
 		}
+	}
+}
+
+func handleFerrisState() {
+	lastTime := time.Now()
+	for {
+		currentTime := time.Now()
+		elapsed := currentTime.Sub(lastTime).Milliseconds()
+
+		if elapsed >= interval {
+			ferrisState.mu.Lock()
+			if ferrisState.cycle < 10 {
+				ferrisState.cycle++
+			} else {
+				ferrisState.cycle = 0
+				if ferrisState.frame < 2 {
+					ferrisState.frame++
+				} else {
+					ferrisState.frame = 0
+				}
+			}
+			ferrisState.mu.Unlock()
+
+			ferrisStatePayload := &FerrisStatePayload{
+				Type:      "ferrisState",
+				PlayerNum: len(ferrisState.players) + 1,
+				Frame:     ferrisState.frame,
+			}
+			ferrisInfoBroadcast <- ferrisStatePayload
+			lastTime = currentTime
+		}
+
+		time.Sleep(time.Millisecond)
 	}
 }
