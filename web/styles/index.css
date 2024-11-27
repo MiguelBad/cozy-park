@@ -26,10 +26,18 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    position: relative;
 }
 
 .player-select--text {
     font-size: 50px;
+}
+
+.tip {
+    position: absolute;
+    font-size: 23px;
+    left: 30px;
+    bottom: 30px;
 }
 
 #player-select--option-container {

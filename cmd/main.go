@@ -156,8 +156,10 @@ func handleConnections(w http.ResponseWriter, req *http.Request) {
 
 	playerStatePayload := &PlayerStatePayload{Type: "playerState", Id: player.id, State: player.state}
 	clientInfoPayload := &ClientConnectionPayload{Type: "connected", Id: player.id}
+	player.mu.Lock()
 	player.conn.WriteJSON(*playerStatePayload)
 	player.conn.WriteJSON(*clientInfoPayload)
+	player.mu.Unlock()
 
 	go handleMessage(player)
 }
@@ -179,7 +181,9 @@ func handleMessage(player *Player) {
 	playerStateBroadcast <- player
 	for p := range playerList.pList {
 		payload := &PlayerStatePayload{Type: "playerState", Id: p.id, State: p.state}
+        player.mu.Lock()
 		err := player.conn.WriteJSON(*payload)
+        player.mu.Unlock()
 
 		if err != nil {
 			log.Printf("Failed to update %v's state on %v\n", p.id, player.id)
