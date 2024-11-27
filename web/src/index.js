@@ -14,6 +14,10 @@
  * ferris: HTMLImageElement[],
  * ferrisMenu: HTMLImageElement[],
  * lakeWaves: HTMLImageElement[],
+ * benchEmpty: HTMLImageElement[],
+ * benchPink: HTMLImageElement[],
+ * benchBlue: HTMLImageElement[],
+ * bencheBluePink: HTMLImageElement[],
  *}} Asset
  * @typedef {{ color: string, action: string, target: string, x: number, y: number, frame: number, changeFrame: boolean, facing: string}} State
  * @typedef { Object<string, State>} PlayerState
@@ -163,13 +167,15 @@ function main(asset) {
     const Area = {
         Dining: { x: 0, y: 992, w: 727, h: 504 },
         FerrisWheel: { x: 0, y: 0, w: 762, h: 736 },
-        Lake: { x: 1565, y: 0, w: 935, h: 819 },
+        Lake1: { x: 2156, y: 0, w: 344, h: 314 },
+        Lake2: { x: 1744, y: 314, w: 756, h: 494 },
+        Bench: { x: 1744, y: 0, w: 412, h: 314 },
     };
     const ObjectPos = {
         DiningTable: { x: 404, y: 1309 },
         FerrisWheel: { x: 250, y: 77 },
         LakeWaves: { x: 1798, y: -38 },
-        Bench: { x: 279, y: 157 },
+        Bench: { x: 1900, y: 160 },
     };
 
     const socket = new WebSocket("ws://localhost:1205/ws");
@@ -197,6 +203,7 @@ function main(asset) {
      * @type {FerrisState}
      */
     const ferrisState = { frame: 0, players: [] };
+    const benchState = { left: "", right: "" };
     socket.onmessage = (event) => {
         const serverMessage = JSON.parse(event.data);
         switch (serverMessage.type) {
@@ -290,7 +297,7 @@ function main(asset) {
                 ferrisMenu,
                 socket
             );
-        } else if (isWithinArea(data, Area.Lake)) {
+        } else if (isWithinArea(data, Area.Bench)) {
         }
     });
 
@@ -409,7 +416,8 @@ function main(asset) {
                 ferrisExit.style.display = "flex";
             }
 
-            renderWaves(gameCtx, asset, ObjectPos.LakeWaves, Area.Lake, waveState);
+            renderBench(gameCtx, asset, ObjectPos.Bench, Area.Bench, benchState);
+            renderWaves(gameCtx, asset, ObjectPos.LakeWaves, Area.Lake1, Area.Lake2, waveState);
             renderFerrisWheel(gameCtx, asset, ObjectPos.FerrisWheel, Area.FerrisWheel, ferrisState);
             renderPlayer(playerState, playerCtx, asset);
             socket.send(JSON.stringify({ type: "player", data: data }));
@@ -473,29 +481,6 @@ function renderPlayer(playerState, playerCtx, asset) {
 function renderGame(gameCtx, frame, pos, area) {
     gameCtx.clearRect(area.x, area.y, area.w, area.h);
     gameCtx.drawImage(frame, pos.x, pos.y);
-}
-
-/**
- * @param {CanvasRenderingContext2D} gameCtx
- * @param {Asset} asset
- * @param {Pos} pos
- * @param {Dimension} area
- * @param {{frame: number, cycle: number}} waveState
- */
-function renderWaves(gameCtx, asset, pos, area, waveState) {
-    if (waveState.cycle < 20) {
-        waveState.cycle++;
-        return;
-    } else {
-        waveState.cycle = 0;
-    }
-
-    waveState.frame++;
-    if (waveState.frame > asset.lakeWaves.length - 1) {
-        waveState.frame = 0;
-    }
-
-    renderGame(gameCtx, asset.lakeWaves[waveState.frame], pos, area);
 }
 
 /**
