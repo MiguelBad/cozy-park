@@ -66,10 +66,10 @@ async function fetchAsset() {
             "assets/ferris-wheel/ferris-menu-background.png",
         ],
         lakeWaves: ["assets/lake/wave-1.png", "assets/lake/wave-2.png"],
-        benchEmpty: ["bench-empty.png"],
-        benchPink: ["bench-pink.png"],
-        benchBlue: ["bench-blue.png"],
-        bencheBluePink: ["bench-blue-pink.png"],
+        benchEmpty: ["assets/lake/bench-empty.png"],
+        benchPink: ["assets/lake/bench-pink.png"],
+        benchBlue: ["assets/lake/bench-blue.png"],
+        bencheBluePink: ["assets/lake/bench-blue-pink.png"],
     };
 
     /**
