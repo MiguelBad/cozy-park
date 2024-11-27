@@ -240,7 +240,10 @@ function main(asset) {
     });
 
     ferrisCancel.addEventListener("click", () => {
-        handleFerrisCancel(ferrisState, ferrisMenu, socket);
+        handleFerrisCancel(ferrisMenu, socket);
+    });
+    ferrisExit.addEventListener("click", () => {
+        handleFerriExit(ferrisState, ferrisExit, socket, playerState);
     });
 
     /**
@@ -319,7 +322,7 @@ function main(asset) {
             data.changeFrame = playerState[Player.userId].changeFrame;
             data.action = playerState[Player.userId].action;
 
-            if (ferrisState.players.length === 2) {
+            if (inFerris(ferrisState)) {
                 moveVal = GameConfig.offMovement;
             } else {
                 moveVal = GameConfig.standardMoveVal;
@@ -347,7 +350,7 @@ function main(asset) {
 
             xTranslate = clientWidth / 2 - GameConfig.playerWidth / 2 - data.x;
             yTranslate = clientHeight / 2 - GameConfig.playerHeight / 2 - data.y;
-            if (ferrisState.players.length === 2) {
+            if (inFerris(ferrisState)) {
                 xTranslate = clientWidth / 2 - Area.FerrisWheel.w / 2;
                 yTranslate = clientHeight / 2 - Area.FerrisWheel.h / 2;
             }
@@ -356,7 +359,7 @@ function main(asset) {
             canvasBackground.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
 
             let walking = false;
-            if (ferrisState.players.length < 2) {
+            if (!inFerris(ferrisState)) {
                 walking = movementKeys.some((key) => keys[key]);
             }
             if (walking) {
@@ -394,10 +397,10 @@ function main(asset) {
                 ferrisState.players.some((p) => p === Player.userId) &&
                 !isWithinArea({ x: data.x, y: data.y }, Area.FerrisWheel)
             ) {
-                handleFerrisCancel(ferrisState, ferrisMenu, socket);
+                handleFerrisCancel(ferrisMenu, socket);
             }
             ferrisExit.style.display = "none";
-            if (ferrisState.players.length === 2) {
+            if (inFerris(ferrisState)) {
                 ferrisMenu.style.display = "none";
                 ferrisExit.style.display = "flex";
             }

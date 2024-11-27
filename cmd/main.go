@@ -262,9 +262,16 @@ func handleMessage(player *Player) {
 					}
 				}
 				if idx > -1 {
+
 					ferrisState.mu.Lock()
 					ferrisState.players = append(ferrisState.players[:idx], ferrisState.players[idx+1:]...)
 					ferrisState.mu.Unlock()
+				}
+				if len(ferrisState.players) <= 0 {
+					for p := range playerList.pList {
+						p.state.Action = "idle"
+						playerStateBroadcast <- p
+					}
 				}
 			}
 		}
@@ -341,6 +348,7 @@ func handleFerrisBroadcast() {
 
 func handleFerrisState() {
 	lastTime := time.Now()
+	reset := true
 	maxFrames := 2
 	for {
 		currentTime := time.Now()
@@ -348,6 +356,11 @@ func handleFerrisState() {
 
 		if elapsed >= interval {
 			ferrisState.mu.Lock()
+			if len(ferrisState.players) == 2 && reset {
+				ferrisState.frame = 0
+				ferrisState.cycle = 0
+				reset = false
+			}
 			if ferrisState.cycle < 10 {
 				ferrisState.cycle++
 			} else {
@@ -355,6 +368,7 @@ func handleFerrisState() {
 				if len(ferrisState.players) == 2 {
 					maxFrames = 5
 				} else {
+					reset = true
 					maxFrames = 2
 				}
 
@@ -372,12 +386,19 @@ func handleFerrisState() {
 				Frame:   ferrisState.frame,
 			}
 			ferrisInfoBroadcast <- ferrisStatePayload
+
 			if len(ferrisState.players) >= 2 {
 				for p := range playerList.pList {
-					p.state.Action = "ferris"
-					playerStateBroadcast <- p
+					for _, ferrisP := range ferrisState.players {
+						if ferrisP == p.id {
+							p.state.Action = "ferris"
+							playerStateBroadcast <- p
+							break
+						}
+					}
 				}
 			}
+
 			lastTime = currentTime
 		}
 

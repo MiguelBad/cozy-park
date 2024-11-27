@@ -9,18 +9,12 @@
  */
 function handleFerrisWheelClick(gameCtx, asset, pos, area, ferrisState, menu, socket) {
     const max = 2;
-    if (ferrisState.players.length > max) {
+    if (ferrisState.players.length === max) {
         return;
     }
 
     if (ferrisState.players.some((p) => p === Player.userId)) {
         return;
-    }
-
-    if (ferrisState.players.length === max) {
-        return socket.send(
-            JSON.stringify({ type: "ferris", data: { didJoin: true, player: Player.userId } })
-        );
     }
 
     const initialFerrisLoading = document.getElementById("ferris-wheel-menu--loading");
@@ -44,20 +38,47 @@ function handleFerrisWheelClick(gameCtx, asset, pos, area, ferrisState, menu, so
  */
 function renderFerrisWheel(gameCtx, asset, pos, area, ferrisState) {
     if (ferrisState.players.length < 2) {
-        renderGame(gameCtx, asset.ferrisEmpty[ferrisState.frame], pos, area);
+        if (ferrisState.frame > 2) {
+            renderGame(gameCtx, asset.ferrisEmpty[ferrisState.frame - 3], pos, area);
+        } else {
+            renderGame(gameCtx, asset.ferrisEmpty[ferrisState.frame], pos, area);
+        }
     } else {
         renderGame(gameCtx, asset.ferris[ferrisState.frame], pos, area);
     }
 }
 
 /**
- * @param {FerrisState} ferrisState
  * @param {HTMLDivElement} menu
  * @param {WebSocket} socket
  */
-function handleFerrisCancel(ferrisState, menu, socket) {
+function handleFerrisCancel(menu, socket) {
     menu.style.display = "none";
     socket.send(
         JSON.stringify({ type: "ferris", data: { didJoin: false, player: Player.userId } })
     );
+}
+
+/**
+ * @param {FerrisState} ferrisState
+ * @param {HTMLParagraphElement} exit
+ * @param {WebSocket} socket
+ * @param {PlayerState} playerState
+ */
+function handleFerriExit(ferrisState, exit, socket, playerState) {
+    exit.style.display = "none";
+    for (const player of ferrisState.players) {
+        socket.send(JSON.stringify({ type: "ferris", data: { didJoin: false, player: player } }));
+        playerState[player].action = "idle";
+    }
+
+    ferrisState.players = [];
+}
+
+/**
+ * @param {FerrisState} ferrisState
+ * @returns {boolean}
+ */
+function inFerris(ferrisState) {
+    return ferrisState.players.length === 2 && ferrisState.players.some((p) => p === Player.userId);
 }

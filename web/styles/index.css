@@ -115,4 +115,5 @@ body {
     z-index: 4;
     width: 182px;
     height: 78px;
+    cursor: pointer;
 }
