@@ -178,7 +178,7 @@ function main(asset) {
         Bench: { x: 1900, y: 160 },
     };
 
-    const socket = new WebSocket("ws://localhost:1205/ws");
+    const socket = new WebSocket("ws://192.168.1.105:1205/ws");
     socket.onopen = () => {
         socket.send(
             JSON.stringify({
