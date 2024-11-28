@@ -378,8 +378,8 @@ function main(asset) {
             xTranslate = clientWidth / 2 - GameConfig.playerWidth / 2 - data.x;
             yTranslate = clientHeight / 2 - GameConfig.playerHeight / 2 - data.y;
             if (inFerris(ferrisState)) {
-                xTranslate = clientWidth / 2 - Area.FerrisWheel.w / 2;
-                yTranslate = clientHeight / 2 - Area.FerrisWheel.h / 2;
+                xTranslate = clientWidth / 2 - Area.FerrisWheel.w / 2 - Area.FerrisWheel.x;
+                yTranslate = clientHeight / 2 - Area.FerrisWheel.h / 2 - Area.FerrisWheel.y;
             }
             playerCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
             gameCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
