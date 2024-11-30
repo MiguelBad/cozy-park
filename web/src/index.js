@@ -18,6 +18,7 @@
  * benchPink: HTMLImageElement[],
  * benchBlue: HTMLImageElement[],
  * bencheBluePink: HTMLImageElement[],
+ * fireworks: HTMLImageElement[],
  *}} Asset
  * @typedef {{ color: string, action: string, target: string, x: number, y: number, frame: number, changeFrame: boolean, facing: string}} State
  * @typedef { Object<string, State>} PlayerState
@@ -47,6 +48,7 @@ window.addEventListener(
     },
     { passive: false }
 );
+
 document.addEventListener("contextmenu", (event) => {
     event.preventDefault();
 });
@@ -92,24 +94,33 @@ function main(asset) {
         throw new Error("cannot find game canvas");
     }
     const playerCanvas = initialPlayerCanvas;
+    const initialPlayerCtx = playerCanvas.getContext("2d");
+    if (!(initialPlayerCtx instanceof CanvasRenderingContext2D)) {
+        throw new Error("failed to create canvas context");
+    }
+    const playerCtx = initialPlayerCtx;
 
     const initialGameCanvas = document.getElementById("game-canvas");
     if (!(initialGameCanvas instanceof HTMLCanvasElement)) {
         throw new Error("cannot find game canvas");
     }
     const gameCanvas = initialGameCanvas;
-
     const initialGameCtx = gameCanvas.getContext("2d");
     if (!(initialGameCtx instanceof CanvasRenderingContext2D)) {
         throw new Error("failed to create canvas context");
     }
     const gameCtx = initialGameCtx;
 
-    const initialPlayerCtx = playerCanvas.getContext("2d");
-    if (!(initialPlayerCtx instanceof CanvasRenderingContext2D)) {
-        throw new Error("failed to create canvas context");
+    const initialFireworkCanvas = document.getElementById("fireworks-canvas");
+    if (!(initialFireworkCanvas instanceof HTMLCanvasElement)) {
+        throw new Error("cannot find fireworks canvas");
     }
-    const playerCtx = initialPlayerCtx;
+    const fireworksCanvas = initialFireworkCanvas;
+    const initialFireworksCtx = fireworksCanvas.getContext("2d");
+    if (!(initialFireworksCtx instanceof CanvasRenderingContext2D)) {
+        throw new Error("failed to create fireworks canvas context");
+    }
+    const fireworksCtx = initialFireworksCtx;
 
     const initialFerrisMenu = document.getElementById("ferris-wheel-menu--container");
     if (!(initialFerrisMenu instanceof HTMLDivElement)) {
@@ -170,12 +181,14 @@ function main(asset) {
         Lake1: { x: 2156, y: 0, w: 344, h: 314 },
         Lake2: { x: 1744, y: 314, w: 756, h: 494 },
         Bench: { x: 1744, y: 0, w: 412, h: 314 },
+        Firework: { x: 2124, y: 46, w: 340, h: 540 },
     };
     const ObjectPos = {
         DiningTable: { x: 404, y: 1309 },
         FerrisWheel: { x: 250, y: 77 },
         LakeWaves: { x: 1798, y: -38 },
         Bench: { x: 1900, y: 160 },
+        Firework: { x: Area.Firework.x, y: Area.Firework.y },
     };
 
     const socket = new WebSocket("ws://192.168.1.105:1205/ws");
@@ -203,7 +216,7 @@ function main(asset) {
      * @type {FerrisState}
      */
     const ferrisState = { frame: 0, players: [] };
-    const benchState = { left: "", right: "" };
+    const benchState = { left: "", right: "", showFireworks: false };
     socket.onmessage = (event) => {
         const serverMessage = JSON.parse(event.data);
         switch (serverMessage.type) {
@@ -229,6 +242,7 @@ function main(asset) {
             case "benchState":
                 benchState.right = serverMessage.right;
                 benchState.left = serverMessage.left;
+                benchState.showFireworks = serverMessage.showFireworks;
                 renderBench(gameCtx, asset, ObjectPos.Bench, Area.Bench, benchState);
                 break;
         }
@@ -324,6 +338,7 @@ function main(asset) {
     let lastFrameTime = 0;
     let moveVal = GameConfig.standardMoveVal;
     const waveState = { frame: 0, cycle: 0 };
+    const fireworksState = { frame: -1, sizeMultiplier: 1, cycle: -1, nextWait: 0 };
     /**
      * @param {number} timestamp
      */
@@ -383,6 +398,7 @@ function main(asset) {
             }
             playerCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
             gameCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
+            fireworksCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
             canvasBackground.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
 
             let walking = false;
@@ -430,6 +446,17 @@ function main(asset) {
             if (inFerris(ferrisState)) {
                 ferrisMenu.style.display = "none";
                 ferrisExit.style.display = "flex";
+            }
+
+            if (benchState.showFireworks) {
+                console.log("ye");
+                renderFireworks(
+                    fireworksCtx,
+                    asset,
+                    ObjectPos.Firework,
+                    Area.Firework,
+                    fireworksState
+                );
             }
 
             renderWaves(gameCtx, asset, ObjectPos.LakeWaves, Area.Lake1, Area.Lake2, waveState);

@@ -126,3 +126,9 @@ body {
     height: 78px;
     cursor: pointer;
 }
+
+#fireworks-canvas {
+    position: absolute;
+    z-index: 5;
+    pointer-events: none;
+}

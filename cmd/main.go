@@ -468,6 +468,9 @@ func handleBenchBroadcast() {
 	for {
 		select {
 		case benchInfo := <-benchInfoBroadcast:
+			if lastBenchState != nil && lastBenchState.ShowFireworks {
+				benchInfo.ShowFireworks = true
+			}
 			lastBenchState = benchInfo
 			for p := range playerList.pList {
 				p.mu.Lock()
@@ -496,7 +499,6 @@ func handleBenchBroadcast() {
 }
 
 func startFireworkTimer() {
-	log.Println("start")
 	ticker := time.NewTicker(1 * time.Second)
 
 	defer func() {
@@ -505,7 +507,7 @@ func startFireworkTimer() {
 	}()
 
 	lastSecond := 0
-	for lastSecond < 2 {
+	for lastSecond < 3 {
 		<-ticker.C
 		lastSecond++
 	}
