@@ -18,6 +18,7 @@
  * benchPink: HTMLImageElement[],
  * benchBlue: HTMLImageElement[],
  * bencheBluePink: HTMLImageElement[],
+ * fireworks: HTMLImageElement[],
  * }>}
  */
 async function fetchAsset() {
@@ -70,6 +71,13 @@ async function fetchAsset() {
         benchPink: ["assets/lake/bench-pink.png"],
         benchBlue: ["assets/lake/bench-blue.png"],
         bencheBluePink: ["assets/lake/bench-blue-pink.png"],
+        fireworks: [
+            "assets/fireworks/firework-1.png",
+            "assets/fireworks/firework-2.png",
+            "assets/fireworks/firework-3.png",
+            "assets/fireworks/firework-4.png",
+            "assets/fireworks/firework-5.png",
+        ],
     };
 
     /**
@@ -92,6 +100,7 @@ async function fetchAsset() {
      * benchPink: HTMLImageElement[],
      * benchBlue: HTMLImageElement[],
      * bencheBluePink: HTMLImageElement[],
+     * fireworks: HTMLImageElement[],
      * }}
      */
     const preloaded = {
@@ -113,6 +122,7 @@ async function fetchAsset() {
         benchPink: [],
         benchBlue: [],
         bencheBluePink: [],
+        fireworks: [],
     };
 
     await preloadImages(path.blueWalkLeft, preloaded.blueWalkLeft);
@@ -133,6 +143,7 @@ async function fetchAsset() {
     await preloadImages(path.benchBlue, preloaded.benchBlue);
     await preloadImages(path.benchPink, preloaded.benchPink);
     await preloadImages(path.bencheBluePink, preloaded.bencheBluePink);
+    await preloadImages(path.fireworks, preloaded.fireworks);
 
     return preloaded;
 }
