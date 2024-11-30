@@ -28,6 +28,7 @@ var (
 	diningInfoBroadcast  = make(chan *DiningStatePayload)
 	ferrisInfoBroadcast  = make(chan *FerrisStatePayload)
 	benchInfoBroadcast   = make(chan *BenchStatePayload)
+	startFirework        = make(chan bool)
 
 	playerList  = newPlayerList()
 	ferrisState = &FerrisState{players: []string{}}
@@ -112,9 +113,10 @@ type FerrisStatePayload struct {
 }
 
 type BenchStatePayload struct {
-	Type  string `json:"type"`
-	Left  string `json:"left"`
-	Right string `json:"right"`
+	Type          string `json:"type"`
+	Left          string `json:"left"`
+	Right         string `json:"right"`
+	ShowFireworks bool   `json:"showFireworks"`
 }
 
 type FerrisState struct {
@@ -127,12 +129,14 @@ type FerrisState struct {
 
 func main() {
 	http.HandleFunc("/ws", handleConnections)
+
 	go handleMoveBroadcast()
 	go handleDisconnectBroadcast()
 	go handleDiningBroadcast()
 	go handleFerrisBroadcast()
 	go handleFerrisState()
 	go handleBenchBroadcast()
+
 	log.Fatal(http.ListenAndServe(":1205", nil))
 }
 
@@ -224,6 +228,7 @@ func handleMessage(player *Player) {
 				log.Printf("failed to decode player message data:\n%v\n", err)
 			}
 
+			player.mu.Lock()
 			if playerMessage.Color != "" {
 				player.state.Color = playerMessage.Color
 			}
@@ -233,6 +238,7 @@ func handleMessage(player *Player) {
 			player.state.Frame = playerMessage.Frame
 			player.state.ChangeFrame = playerMessage.ChangeFrame
 			player.state.Action = playerMessage.Action
+			player.mu.Unlock()
 
 			playerStateBroadcast <- player
 
@@ -303,12 +309,17 @@ func handleMessage(player *Player) {
 			if err != nil {
 				log.Printf("failed to decode bench info json:\n%v\n", err)
 			}
+
 			benchStatePayload := &BenchStatePayload{
 				Type:  "benchState",
 				Left:  benchMessage.Left,
 				Right: benchMessage.Right,
 			}
-			log.Println(benchStatePayload)
+
+			if benchMessage.Left != "" && benchMessage.Right != "" {
+				go startFireworkTimer()
+			}
+
 			benchInfoBroadcast <- benchStatePayload
 		}
 	}
@@ -386,21 +397,30 @@ func handleFerrisState() {
 	lastTime := time.Now()
 	reset := true
 	maxFrames := 2
+
 	for {
 		currentTime := time.Now()
 		elapsed := currentTime.Sub(lastTime).Milliseconds()
 
 		if elapsed >= interval {
-			ferrisState.mu.Lock()
-			if len(ferrisState.players) == 2 && reset {
-				ferrisState.frame = 0
-				ferrisState.cycle = 0
-				reset = false
+			if len(ferrisState.players) == 2 {
+				if reset {
+					ferrisState.mu.Lock()
+					ferrisState.frame = 0
+					ferrisState.cycle = 0
+					reset = false
+					ferrisState.mu.Unlock()
+				}
 			}
+
 			if ferrisState.cycle < 10 {
+				ferrisState.mu.Lock()
 				ferrisState.cycle++
+				ferrisState.mu.Unlock()
 			} else {
+				ferrisState.mu.Lock()
 				ferrisState.cycle = 0
+				ferrisState.mu.Unlock()
 				if len(ferrisState.players) == 2 {
 					maxFrames = 5
 				} else {
@@ -408,13 +428,14 @@ func handleFerrisState() {
 					maxFrames = 2
 				}
 
+				ferrisState.mu.Lock()
 				if ferrisState.frame < maxFrames {
 					ferrisState.frame++
 				} else {
 					ferrisState.frame = 0
 				}
+				ferrisState.mu.Unlock()
 			}
-			ferrisState.mu.Unlock()
 
 			ferrisStatePayload := &FerrisStatePayload{
 				Type:    "ferrisState",
@@ -443,16 +464,49 @@ func handleFerrisState() {
 }
 
 func handleBenchBroadcast() {
+	var lastBenchState *BenchStatePayload
 	for {
-		benchInfo := <-benchInfoBroadcast
-		for p := range playerList.pList {
-			p.mu.Lock()
-			err := p.conn.WriteJSON(*benchInfo)
-			p.mu.Unlock()
-			if err != nil {
-				log.Printf("failed to send bench info to %v\n:%v\n", p.id, err)
-				// todo error handle
+		select {
+		case benchInfo := <-benchInfoBroadcast:
+			lastBenchState = benchInfo
+			for p := range playerList.pList {
+				p.mu.Lock()
+				err := p.conn.WriteJSON(*benchInfo)
+				p.mu.Unlock()
+				if err != nil {
+					log.Printf("failed to send bench info to %v\n:%v\n", p.id, err)
+					// todo error handle
+				}
+			}
+
+		case firework := <-startFirework:
+			if lastBenchState.Left != "" && lastBenchState.Right != "" {
+				benchStatePayload := &BenchStatePayload{
+					Type:          "benchState",
+					Left:          lastBenchState.Left,
+					Right:         lastBenchState.Right,
+					ShowFireworks: firework,
+				}
+				go func(payload *BenchStatePayload) {
+					benchInfoBroadcast <- benchStatePayload
+				}(benchStatePayload)
 			}
 		}
+	}
+}
+
+func startFireworkTimer() {
+	log.Println("start")
+	ticker := time.NewTicker(1 * time.Second)
+
+	defer func() {
+		ticker.Stop()
+		startFirework <- true
+	}()
+
+	lastSecond := 0
+	for lastSecond < 2 {
+		<-ticker.C
+		lastSecond++
 	}
 }
