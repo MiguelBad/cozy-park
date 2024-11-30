@@ -100,6 +100,17 @@ function main(asset) {
     }
     const playerCtx = initialPlayerCtx;
 
+    const initialOtherPlayerCanvas = document.getElementById("other-player-canvas");
+    if (!(initialOtherPlayerCanvas instanceof HTMLCanvasElement)) {
+        throw new Error("cannot find game canvas");
+    }
+    const otherPlayerCanvas = initialOtherPlayerCanvas;
+    const initialOtherPlayerCtx = otherPlayerCanvas.getContext("2d");
+    if (!(initialOtherPlayerCtx instanceof CanvasRenderingContext2D)) {
+        throw new Error("failed to create canvas context");
+    }
+    const otherPlayerCtx = initialOtherPlayerCtx;
+
     const initialGameCanvas = document.getElementById("game-canvas");
     if (!(initialGameCanvas instanceof HTMLCanvasElement)) {
         throw new Error("cannot find game canvas");
@@ -397,6 +408,7 @@ function main(asset) {
                 yTranslate = clientHeight / 2 - Area.FerrisWheel.h / 2 - Area.FerrisWheel.y;
             }
             playerCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
+            otherPlayerCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
             gameCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
             fireworksCanvas.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
             canvasBackground.style.transform = `translate(${xTranslate}px, ${yTranslate}px)`;
@@ -449,7 +461,6 @@ function main(asset) {
             }
 
             if (benchState.showFireworks) {
-                console.log("ye");
                 renderFireworks(
                     fireworksCtx,
                     asset,
@@ -461,7 +472,7 @@ function main(asset) {
 
             renderWaves(gameCtx, asset, ObjectPos.LakeWaves, Area.Lake1, Area.Lake2, waveState);
             renderFerrisWheel(gameCtx, asset, ObjectPos.FerrisWheel, Area.FerrisWheel, ferrisState);
-            renderPlayer(playerState, playerCtx, asset);
+            renderPlayer(playerState, playerCtx, otherPlayerCtx, asset);
             socket.send(JSON.stringify({ type: "player", data: data }));
 
             lastFrameTime = timestamp - (elapsed % interval);
@@ -474,15 +485,15 @@ function main(asset) {
 /**
  * @param {PlayerState} playerState
  * @param {CanvasRenderingContext2D} playerCtx
+ * @param {CanvasRenderingContext2D} otherPlayerCtx
  * @param {Asset} asset
  */
-function renderPlayer(playerState, playerCtx, asset) {
-    playerCtx.clearRect(0, 0, GameConfig.canvasWidth, GameConfig.canvasHeight);
-
+function renderPlayer(playerState, playerCtx, otherPlayerCtx, asset) {
     /**
      * @param {string} player
+     * @param {CanvasRenderingContext2D} ctx
      */
-    function renderPlayerHelper(player) {
+    function renderPlayerHelper(player, ctx) {
         const state = playerState[player];
 
         let walkingFrame = asset.pinkWalkRight;
@@ -495,7 +506,7 @@ function renderPlayer(playerState, playerCtx, asset) {
                 walkingFrame = asset.blueWalkLeft;
             }
         }
-        playerCtx.drawImage(walkingFrame[state.frame], state.x, state.y);
+        ctx.drawImage(walkingFrame[state.frame], state.x, state.y);
     }
 
     for (const player in playerState) {
@@ -503,14 +514,16 @@ function renderPlayer(playerState, playerCtx, asset) {
             continue;
         }
         if (playerState[player].action === "move" || playerState[player].action === "idle") {
-            renderPlayerHelper(player);
+            otherPlayerCtx.clearRect(0, 0, GameConfig.canvasWidth, GameConfig.canvasHeight);
+            renderPlayerHelper(player, otherPlayerCtx);
         }
     }
     if (
         playerState[Player.userId].action === "move" ||
         playerState[Player.userId].action === "idle"
     ) {
-        renderPlayerHelper(Player.userId);
+        playerCtx.clearRect(0, 0, GameConfig.canvasWidth, GameConfig.canvasHeight);
+        renderPlayerHelper(Player.userId, playerCtx);
     }
 }
 
