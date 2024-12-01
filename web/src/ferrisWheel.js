@@ -59,15 +59,15 @@ function handleFerrisCancel(menu, socket) {
  * @param {FerrisState} ferrisState
  * @param {HTMLParagraphElement} exit
  * @param {WebSocket} socket
- * @param {PlayerState} playerState
+ * @param {State} playerClientState
  */
-function handleFerriExit(ferrisState, exit, socket, playerState) {
+function handleFerriExit(ferrisState, exit, socket, playerClientState) {
     exit.style.display = "none";
     for (const player of ferrisState.players) {
         socket.send(JSON.stringify({ type: "ferris", data: { didJoin: false, player: player } }));
-        playerState[player].action = "idle";
     }
 
+    playerClientState.action = "idle";
     ferrisState.players = [];
 }
 

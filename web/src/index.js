@@ -237,8 +237,11 @@ function main(asset) {
         const serverMessage = JSON.parse(event.data);
         switch (serverMessage.type) {
             case "playerState":
-                if (serverMessage.id != Player.userId) {
+                if (serverMessage.id !== Player.userId) {
                     playerState[serverMessage.id] = serverMessage.state;
+                }
+                if (serverMessage.id === Player.userId && serverMessage.state.action === "ferris") {
+                    playerClientState.action = "ferris";
                 }
                 break;
             case "connected":
@@ -290,7 +293,7 @@ function main(asset) {
         handleFerrisCancel(ferrisMenu, socket);
     });
     ferrisExit.addEventListener("click", () => {
-        handleFerriExit(ferrisState, ferrisExit, socket, playerState);
+        handleFerriExit(ferrisState, ferrisExit, socket, playerClientState);
     });
 
     let xTranslate = 0;
