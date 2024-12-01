@@ -203,25 +203,26 @@ function main(asset) {
     };
 
     const socket = new WebSocket("ws://192.168.1.105:1205/ws");
-    socket.onopen = () => {
-        socket.send(
-            JSON.stringify({
-                type: "player",
-                data: {
-                    color: Player.color,
-                    x: GameConfig.startingPos.x,
-                    y: GameConfig.startingPos.y,
-                    facing: "left",
-                    action: "idle",
-                },
-            })
-        );
-    };
-
     /**
      * @type {PlayerState}
      */
     const playerState = {};
+    socket.onopen = () => {
+        const data = {
+            color: Player.color,
+            x: GameConfig.startingPos.x,
+            y: GameConfig.startingPos.y,
+            facing: "left",
+            action: "idle",
+        };
+        playerState[Player.userId].color = data.color;
+        playerState[Player.userId].x = data.x;
+        playerState[Player.userId].y = data.y;
+        playerState[Player.userId].facing = data.facing;
+        playerState[Player.userId].action = data.action;
+        socket.send(JSON.stringify({ type: "player", data: data }));
+    };
+
     const diningState = { left: "", right: "" };
     /**
      * @type {FerrisState}
@@ -232,7 +233,9 @@ function main(asset) {
         const serverMessage = JSON.parse(event.data);
         switch (serverMessage.type) {
             case "playerState":
-                playerState[serverMessage.id] = serverMessage.state;
+                if (serverMessage.id != Player.userId) {
+                    playerState[serverMessage.id] = serverMessage.state;
+                }
                 break;
             case "connected":
                 Player.userId = serverMessage.id;
@@ -465,6 +468,14 @@ function main(asset) {
             renderWaves(gameCtx, asset, ObjectPos.LakeWaves, Area.Lake1, Area.Lake2, waveState);
             renderFerrisWheel(gameCtx, asset, ObjectPos.FerrisWheel, Area.FerrisWheel, ferrisState);
             renderPlayer(playerState, playerCtx, otherPlayerCtx, asset);
+
+            playerState[Player.userId].x = data.x;
+            playerState[Player.userId].y = data.y;
+            playerState[Player.userId].frame = data.frame;
+            playerState[Player.userId].action = data.action;
+            playerState[Player.userId].facing = data.facing;
+            playerState[Player.userId].changeFrame = data.changeFrame;
+
             socket.send(JSON.stringify({ type: "player", data: data }));
 
             lastFrameTime = timestamp - (elapsed % interval);
