@@ -20,7 +20,7 @@
  * bencheBluePink: HTMLImageElement[],
  * fireworks: HTMLImageElement[],
  *}} Asset
- * @typedef {{ color: string, action: string, target: string, x: number, y: number, frame: number, changeFrame: boolean, facing: string}} State
+ * @typedef {{ color: string, action: string, x: number, y: number, frame: number, changeFrame: boolean, facing: string}} State
  * @typedef { Object<string, State>} PlayerState
  * @typedef {{x: number, y: number, facing: string, frame: number, changeFrame: boolean, action: string}} Data
  * @typedef {{x: number, y: number, w: number, h: number}} Dimension
@@ -218,6 +218,15 @@ function main(asset) {
      * @type {PlayerState}
      */
     const playerState = {};
+    const playerClientState = {
+        color: Player.color,
+        action: "idle",
+        x: GameConfig.startingPos.x,
+        y: GameConfig.startingPos.y,
+        frame: 0,
+        changeFrame: true,
+        facing: "left",
+    };
     const diningState = { left: "", right: "" };
     /**
      * @type {FerrisState}
@@ -228,12 +237,6 @@ function main(asset) {
         const serverMessage = JSON.parse(event.data);
         switch (serverMessage.type) {
             case "playerState":
-                if (playerState[serverMessage.id]) {
-                    if (serverMessage.state.color) {
-                        playerState[serverMessage.id].color = serverMessage.state.color;
-                    }
-                    playerState[serverMessage.id].action = serverMessage.state.action;
-                }
                 if (serverMessage.id != Player.userId) {
                     playerState[serverMessage.id] = serverMessage.state;
                 }
@@ -290,17 +293,6 @@ function main(asset) {
         handleFerriExit(ferrisState, ferrisExit, socket, playerState);
     });
 
-    /**
-     * @type {Data}
-     */
-    const data = {
-        x: 0,
-        y: 0,
-        facing: "",
-        frame: 0,
-        changeFrame: false,
-        action: "idle",
-    };
     let xTranslate = 0;
     let yTranslate = 0;
 
@@ -310,20 +302,20 @@ function main(asset) {
             y: event.offsetY,
         };
 
-        if (isWithinArea(data, Area.Dining)) {
+        if (isWithinArea(playerClientState, Area.Dining)) {
             handleDiningClick(
                 gameCtx,
                 asset,
                 click,
-                data,
+                playerClientState,
                 ObjectPos.DiningTable,
                 Area.Dining,
                 diningState,
                 socket
             );
-        } else if (isWithinArea(data, Area.FerrisWheel)) {
+        } else if (isWithinArea(playerClientState, Area.FerrisWheel)) {
             handleFerrisWheelClick(ferrisState, ferrisMenu, socket);
-        } else if (isWithinArea(data, Area.Bench)) {
+        } else if (isWithinArea(playerClientState, Area.Bench)) {
             handleBenchClick(
                 gameCtx,
                 asset,
@@ -332,7 +324,7 @@ function main(asset) {
                 benchState,
                 socket,
                 click,
-                data
+                playerClientState
             );
         }
     });
@@ -364,41 +356,34 @@ function main(asset) {
         }
 
         if (elapsed > interval) {
-            data.x = playerState[Player.userId].x;
-            data.y = playerState[Player.userId].y;
-            data.facing = playerState[Player.userId].facing;
-            data.frame = playerState[Player.userId].frame;
-            data.changeFrame = playerState[Player.userId].changeFrame;
-            data.action = playerState[Player.userId].action;
-
             if (inFerris(ferrisState)) {
                 moveVal = GameConfig.offMovement;
             } else {
                 moveVal = GameConfig.standardMoveVal;
             }
 
-            if (keys.w && validMove(data.x, data.y - moveVal)) {
-                data.y -= moveVal;
+            if (keys.w && validMove(playerClientState.x, playerClientState.y - moveVal)) {
+                playerClientState.y -= moveVal;
             }
-            if (keys.a && validMove(data.x - moveVal, data.y)) {
-                data.x -= moveVal;
+            if (keys.a && validMove(playerClientState.x - moveVal, playerClientState.y)) {
+                playerClientState.x -= moveVal;
             }
-            if (keys.s && validMove(data.x, data.y + moveVal)) {
-                data.y += moveVal;
+            if (keys.s && validMove(playerClientState.x, playerClientState.y + moveVal)) {
+                playerClientState.y += moveVal;
             }
-            if (keys.d && validMove(data.x + moveVal, data.y)) {
-                data.x += moveVal;
+            if (keys.d && validMove(playerClientState.x + moveVal, playerClientState.y)) {
+                playerClientState.x += moveVal;
             }
             if (!(keys.a && keys.d)) {
                 if (keys.a) {
-                    data.facing = "left";
+                    playerClientState.facing = "left";
                 } else if (keys.d) {
-                    data.facing = "right";
+                    playerClientState.facing = "right";
                 }
             }
 
-            xTranslate = clientWidth / 2 - GameConfig.playerWidth / 2 - data.x;
-            yTranslate = clientHeight / 2 - GameConfig.playerHeight / 2 - data.y;
+            xTranslate = clientWidth / 2 - GameConfig.playerWidth / 2 - playerClientState.x;
+            yTranslate = clientHeight / 2 - GameConfig.playerHeight / 2 - playerClientState.y;
             if (inFerris(ferrisState)) {
                 xTranslate = clientWidth / 2 - Area.FerrisWheel.w / 2 - Area.FerrisWheel.x;
                 yTranslate = clientHeight / 2 - Area.FerrisWheel.h / 2 - Area.FerrisWheel.y;
@@ -414,21 +399,21 @@ function main(asset) {
                 walking = movementKeys.some((key) => keys[key]);
             }
             if (walking) {
-                data.action = "move";
-                if (data.changeFrame) {
-                    data.frame += 1;
-                    data.changeFrame = false;
+                playerClientState.action = "move";
+                if (playerClientState.changeFrame) {
+                    playerClientState.frame += 1;
+                    playerClientState.changeFrame = false;
                 } else {
-                    data.changeFrame = true;
+                    playerClientState.changeFrame = true;
                 }
-                if (data.frame > 2) {
-                    data.frame = 0;
+                if (playerClientState.frame > 2) {
+                    playerClientState.frame = 0;
                 }
                 if (
                     (keys.a && keys.d && !(keys.w || keys.s)) ||
                     (keys.w && keys.s && !(keys.a || keys.d))
                 ) {
-                    data.frame = 0;
+                    playerClientState.frame = 0;
                 }
 
                 handleDiningMove(
@@ -441,12 +426,12 @@ function main(asset) {
                 );
                 handleBenchMove(gameCtx, asset, ObjectPos.Bench, Area.Bench, benchState, socket);
             } else {
-                data.frame = 0;
+                playerClientState.frame = 0;
             }
 
             if (
                 ferrisState.players.some((p) => p === Player.userId) &&
-                !isWithinArea({ x: data.x, y: data.y }, Area.FerrisWheel)
+                !isWithinArea({ x: playerClientState.x, y: playerClientState.y }, Area.FerrisWheel)
             ) {
                 handleFerrisCancel(ferrisMenu, socket);
             }
@@ -468,16 +453,9 @@ function main(asset) {
 
             renderWaves(gameCtx, asset, ObjectPos.LakeWaves, Area.Lake1, Area.Lake2, waveState);
             renderFerrisWheel(gameCtx, asset, ObjectPos.FerrisWheel, Area.FerrisWheel, ferrisState);
-            renderPlayer(playerState, playerCtx, otherPlayerCtx, asset);
+            renderPlayer(playerState, playerClientState, playerCtx, otherPlayerCtx, asset);
 
-            playerState[Player.userId].x = data.x;
-            playerState[Player.userId].y = data.y;
-            playerState[Player.userId].frame = data.frame;
-            playerState[Player.userId].action = data.action;
-            playerState[Player.userId].facing = data.facing;
-            playerState[Player.userId].changeFrame = data.changeFrame;
-
-            socket.send(JSON.stringify({ type: "player", data: data }));
+            socket.send(JSON.stringify({ type: "player", data: playerClientState }));
 
             lastFrameTime = timestamp - (elapsed % interval);
         }
@@ -488,11 +466,12 @@ function main(asset) {
 
 /**
  * @param {PlayerState} playerState
+ * @param {State} playerClientState
  * @param {CanvasRenderingContext2D} playerCtx
  * @param {CanvasRenderingContext2D} otherPlayerCtx
  * @param {Asset} asset
  */
-function renderPlayer(playerState, playerCtx, otherPlayerCtx, asset) {
+function renderPlayer(playerState, playerClientState, playerCtx, otherPlayerCtx, asset) {
     playerCtx.clearRect(0, 0, GameConfig.canvasWidth, GameConfig.canvasHeight);
     otherPlayerCtx.clearRect(0, 0, GameConfig.canvasWidth, GameConfig.canvasHeight);
     /**
@@ -500,15 +479,23 @@ function renderPlayer(playerState, playerCtx, otherPlayerCtx, asset) {
      * @param {CanvasRenderingContext2D} ctx
      */
     function renderPlayerHelper(player, ctx) {
-        const state = playerState[player];
+        /**
+         *@type {State}
+         */
+        let state;
+        if (player !== Player.userId) {
+            state = playerState[player];
+        } else {
+            state = playerClientState;
+        }
 
         let walkingFrame = asset.pinkWalkRight;
-        if (playerState[player].color === "blue") {
+        if (state.color === "blue") {
             walkingFrame = asset.blueWalkRight;
         }
-        if (playerState[player].facing === "left") {
+        if (state.facing === "left") {
             walkingFrame = asset.pinkWalkLeft;
-            if (playerState[player].color === "blue") {
+            if (state.color === "blue") {
                 walkingFrame = asset.blueWalkLeft;
             }
         }
@@ -523,10 +510,7 @@ function renderPlayer(playerState, playerCtx, otherPlayerCtx, asset) {
             renderPlayerHelper(player, otherPlayerCtx);
         }
     }
-    if (
-        playerState[Player.userId].action === "move" ||
-        playerState[Player.userId].action === "idle"
-    ) {
+    if (playerClientState.action === "move" || playerClientState.action === "idle") {
         renderPlayerHelper(Player.userId, playerCtx);
     }
 }
