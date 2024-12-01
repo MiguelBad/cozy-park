@@ -203,10 +203,6 @@ function main(asset) {
     };
 
     const socket = new WebSocket("ws://192.168.1.105:1205/ws");
-    /**
-     * @type {PlayerState}
-     */
-    const playerState = {};
     socket.onopen = () => {
         const data = {
             color: Player.color,
@@ -215,14 +211,13 @@ function main(asset) {
             facing: "left",
             action: "idle",
         };
-        playerState[Player.userId].color = data.color;
-        playerState[Player.userId].x = data.x;
-        playerState[Player.userId].y = data.y;
-        playerState[Player.userId].facing = data.facing;
-        playerState[Player.userId].action = data.action;
         socket.send(JSON.stringify({ type: "player", data: data }));
     };
 
+    /**
+     * @type {PlayerState}
+     */
+    const playerState = {};
     const diningState = { left: "", right: "" };
     /**
      * @type {FerrisState}
@@ -233,6 +228,9 @@ function main(asset) {
         const serverMessage = JSON.parse(event.data);
         switch (serverMessage.type) {
             case "playerState":
+                if (serverMessage.state.color) {
+                    playerState[serverMessage.id].color = serverMessage.state.color;
+                }
                 if (serverMessage.id != Player.userId) {
                     playerState[serverMessage.id] = serverMessage.state;
                 }
