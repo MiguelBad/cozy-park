@@ -72,6 +72,7 @@ async function fetchAsset() {
         benchBlue: ["assets/lake/bench-blue.png"],
         bencheBluePink: ["assets/lake/bench-blue-pink.png"],
         fireworks: [
+            "assets/fireworks/firework-0.png",
             "assets/fireworks/firework-1.png",
             "assets/fireworks/firework-2.png",
             "assets/fireworks/firework-3.png",

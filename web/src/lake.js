@@ -101,7 +101,7 @@ function handleBenchMove(gameCtx, asset, pos, area, benchState, socket) {
  * @param {{frame: number, sizeMultiplier: number, cycle: number, nextWait: number}} fireworksState
  */
 function renderFireworks(fireworksCtx, asset, pos, area, fireworksState) {
-    if (fireworksState.nextWait < 4) {
+    if (fireworksState.nextWait < 10) {
         fireworksState.nextWait++;
         return;
     }
@@ -114,7 +114,7 @@ function renderFireworks(fireworksCtx, asset, pos, area, fireworksState) {
     }
 
     fireworksState.frame++;
-    if (fireworksState.frame >= 5) {
+    if (fireworksState.frame > 5) {
         fireworksState.frame = 0;
         fireworksState.nextWait = 0;
     }

@@ -468,7 +468,6 @@ function main(asset) {
             socket.send(JSON.stringify({ type: "player", data: data }));
 
             lastFrameTime = timestamp - (elapsed % interval);
-            console.log(playerState);
         }
         requestAnimationFrame(gameLoop);
     }
