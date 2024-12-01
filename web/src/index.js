@@ -228,8 +228,11 @@ function main(asset) {
         const serverMessage = JSON.parse(event.data);
         switch (serverMessage.type) {
             case "playerState":
-                if (serverMessage.state.color && playerState[serverMessage.id]) {
-                    playerState[serverMessage.id].color = serverMessage.state.color;
+                if (playerState[serverMessage.id]) {
+                    if (serverMessage.state.color) {
+                        playerState[serverMessage.id].color = serverMessage.state.color;
+                    }
+                    playerState[serverMessage.id].action = serverMessage.state.action;
                 }
                 if (serverMessage.id != Player.userId) {
                     playerState[serverMessage.id] = serverMessage.state;
