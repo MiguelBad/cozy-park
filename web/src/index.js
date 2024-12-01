@@ -35,7 +35,7 @@ const GameConfig = {
     startingPos: { x: 2200, y: 1300 },
     playerHeight: 64,
     playerWidth: 64,
-    standardMoveVal: 20,
+    standardMoveVal: 15,
     offMovement: 0,
 };
 
@@ -489,6 +489,8 @@ function main(asset) {
  * @param {Asset} asset
  */
 function renderPlayer(playerState, playerCtx, otherPlayerCtx, asset) {
+    playerCtx.clearRect(0, 0, GameConfig.canvasWidth, GameConfig.canvasHeight);
+    otherPlayerCtx.clearRect(0, 0, GameConfig.canvasWidth, GameConfig.canvasHeight);
     /**
      * @param {string} player
      * @param {CanvasRenderingContext2D} ctx
@@ -514,7 +516,6 @@ function renderPlayer(playerState, playerCtx, otherPlayerCtx, asset) {
             continue;
         }
         if (playerState[player].action === "move" || playerState[player].action === "idle") {
-            otherPlayerCtx.clearRect(0, 0, GameConfig.canvasWidth, GameConfig.canvasHeight);
             renderPlayerHelper(player, otherPlayerCtx);
         }
     }
@@ -522,7 +523,6 @@ function renderPlayer(playerState, playerCtx, otherPlayerCtx, asset) {
         playerState[Player.userId].action === "move" ||
         playerState[Player.userId].action === "idle"
     ) {
-        playerCtx.clearRect(0, 0, GameConfig.canvasWidth, GameConfig.canvasHeight);
         renderPlayerHelper(Player.userId, playerCtx);
     }
 }

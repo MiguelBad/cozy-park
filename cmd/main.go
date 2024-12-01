@@ -217,6 +217,7 @@ func handleMessage(player *Player) {
 
 		switch message.Type {
 		case "player":
+			log.Println(message)
 			databytes, err := json.Marshal(message.Data)
 			if err != nil {
 				log.Printf("failed to encode json on player message data:\n%v\n", err)
