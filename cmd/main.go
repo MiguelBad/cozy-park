@@ -286,15 +286,17 @@ func handleMessage(player *Player) {
 					}
 				}
 				if idx > -1 {
-
 					ferrisState.mu.Lock()
 					ferrisState.players = append(ferrisState.players[:idx], ferrisState.players[idx+1:]...)
 					ferrisState.mu.Unlock()
 				}
 				if len(ferrisState.players) <= 0 {
 					for p := range playerList.pList {
-						p.state.Action = "idle"
-						playerStateBroadcast <- p
+						if p.state.Action == "ferris" {
+							p.state.Action = "idle"
+							playerStateBroadcast <- p
+							break
+						}
 					}
 				}
 			}

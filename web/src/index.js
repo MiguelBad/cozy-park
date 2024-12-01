@@ -318,15 +318,7 @@ function main(asset) {
                 socket
             );
         } else if (isWithinArea(data, Area.FerrisWheel)) {
-            handleFerrisWheelClick(
-                gameCtx,
-                asset,
-                ObjectPos.FerrisWheel,
-                Area.FerrisWheel,
-                ferrisState,
-                ferrisMenu,
-                socket
-            );
+            handleFerrisWheelClick(ferrisState, ferrisMenu, socket);
         } else if (isWithinArea(data, Area.Bench)) {
             handleBenchClick(
                 gameCtx,
@@ -476,6 +468,7 @@ function main(asset) {
             socket.send(JSON.stringify({ type: "player", data: data }));
 
             lastFrameTime = timestamp - (elapsed % interval);
+            console.log(playerState);
         }
         requestAnimationFrame(gameLoop);
     }

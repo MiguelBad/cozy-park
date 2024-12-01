@@ -1,13 +1,9 @@
 /**
- * @param {CanvasRenderingContext2D} gameCtx
- * @param {Asset} asset
- * @param {Pos} pos
- * @param {Dimension} area
  * @param {FerrisState} ferrisState
  * @param {HTMLDivElement} menu
  * @param {WebSocket} socket
  */
-function handleFerrisWheelClick(gameCtx, asset, pos, area, ferrisState, menu, socket) {
+function handleFerrisWheelClick(ferrisState, menu, socket) {
     const max = 2;
     if (ferrisState.players.length === max) {
         return;
