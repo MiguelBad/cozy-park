@@ -37,6 +37,7 @@ const GameConfig = {
     playerWidth: 64,
     standardMoveVal: 15,
     offMovement: 0,
+    ip: "",
 };
 
 window.addEventListener(
@@ -59,6 +60,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         throw new Error("cannot find fetch load element");
     }
 
+    const response = await fetch("src/conf.json");
+    if (!response.ok) {
+        throw new Error("failed to get websocket ip");
+    }
+    const data = await response.json();
+    GameConfig.ip = data.ip;
+
     const asset = await fetchAsset();
     fetchLoad.hidden = true;
 
@@ -67,8 +75,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             Player.color = selected;
             main(asset);
         })
-        .catch(() => {
-            console.error("failed to select player");
+        .catch((err) => {
+            console.error("failed to select player", err);
         });
 });
 
@@ -202,7 +210,8 @@ function main(asset) {
         Firework: { x: Area.Firework.x, y: Area.Firework.y },
     };
 
-    const socket = new WebSocket("ws://192.168.1.105:1205/ws");
+    console.log(GameConfig.ip);
+    const socket = new WebSocket(`ws://${GameConfig.ip}:1205/ws`);
     socket.onopen = () => {
         const data = {
             color: Player.color,
@@ -488,13 +497,6 @@ function main(asset) {
 function renderPlayer(playerState, playerClientState, playerCtx, otherPlayerCtx, asset) {
     playerCtx.clearRect(0, 0, GameConfig.canvasWidth, GameConfig.canvasHeight);
     otherPlayerCtx.clearRect(0, 0, GameConfig.canvasWidth, GameConfig.canvasHeight);
-
-    const foo = {};
-    for (const p in playerState) {
-        foo[p] = playerState[p].action;
-    }
-    foo["pclient"] = playerClientState.action;
-    // console.log(foo);
 
     /**
      * @param {string} player
