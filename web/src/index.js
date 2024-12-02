@@ -210,7 +210,6 @@ function main(asset) {
         Firework: { x: Area.Firework.x, y: Area.Firework.y },
     };
 
-    console.log(GameConfig.ip);
     const socket = new WebSocket(`ws://${GameConfig.ip}:1205/ws`);
     socket.onopen = () => {
         const data = {
