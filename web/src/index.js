@@ -35,7 +35,7 @@ const GameConfig = {
     startingPos: { x: 2200, y: 1300 },
     playerHeight: 64,
     playerWidth: 64,
-    standardMoveVal: 30,
+    standardMoveVal: 15,
     offMovement: 0,
 };
 
