@@ -80,8 +80,8 @@ type DiningMessage struct {
 }
 
 type FerrisMessage struct {
-	DidJoin bool   `json:"didJoin"`
-	Player  string `json:"player"`
+	Action string `json:"action"`
+	Player string `json:"player"`
 }
 
 type BenchMessage struct {
@@ -273,11 +273,12 @@ func handleMessage(player *Player) {
 			if err != nil {
 				log.Printf("failed to decode json on ferris message:\n%v\n", err)
 			}
-			if ferrisMessage.DidJoin {
+			switch ferrisMessage.Action {
+			case "join":
 				ferrisState.mu.Lock()
 				ferrisState.players = append(ferrisState.players, ferrisMessage.Player)
 				ferrisState.mu.Unlock()
-			} else {
+			case "cancel":
 				idx := -1
 				for i, p := range ferrisState.players {
 					if p == ferrisMessage.Player {
@@ -289,15 +290,13 @@ func handleMessage(player *Player) {
 					ferrisState.players = append(ferrisState.players[:idx], ferrisState.players[idx+1:]...)
 					ferrisState.mu.Unlock()
 				}
-				if len(ferrisState.players) <= 0 {
-					for p := range playerList.pList {
-						if p.state.Action == "ferris" {
-							p.state.Action = "idle"
-							playerStateBroadcast <- p
-							break
-						}
-					}
+
+			case "exit":
+				for p := range playerList.pList {
+					p.state.Action = "idle"
+					playerStateBroadcast <- p
 				}
+				ferrisState.players = []string{}
 			}
 
 		case "bench":

@@ -35,7 +35,7 @@ const GameConfig = {
     startingPos: { x: 2200, y: 1300 },
     playerHeight: 64,
     playerWidth: 64,
-    standardMoveVal: 15,
+    standardMoveVal: 30,
     offMovement: 0,
 };
 
@@ -240,8 +240,19 @@ function main(asset) {
                 if (serverMessage.id !== Player.userId) {
                     playerState[serverMessage.id] = serverMessage.state;
                 }
-                if (serverMessage.id === Player.userId && serverMessage.state.action === "ferris") {
+                if (
+                    serverMessage.id === Player.userId &&
+                    serverMessage.state.action === "ferris" &&
+                    (playerClientState.action === "idle" || playerClientState.action === "move") &&
+                    ferrisState.players.length === 2
+                ) {
                     playerClientState.action = "ferris";
+                } else if (
+                    serverMessage.id === Player.userId &&
+                    playerClientState.action === "ferris" &&
+                    ferrisState.players.length === 0
+                ) {
+                    playerClientState.action = "idle";
                 }
                 break;
             case "connected":
@@ -293,7 +304,7 @@ function main(asset) {
         handleFerrisCancel(ferrisMenu, socket);
     });
     ferrisExit.addEventListener("click", () => {
-        handleFerriExit(ferrisState, ferrisExit, socket, playerClientState);
+        handleFerriExit(ferrisState, ferrisExit, socket, playerClientState, playerState);
     });
 
     let xTranslate = 0;
@@ -347,7 +358,7 @@ function main(asset) {
     function gameLoop(timestamp) {
         const elapsed = timestamp - lastFrameTime;
 
-        if (!Player.userId || !playerState || !Player.color) {
+        if (!Player.userId || !playerState || !playerClientState || !Player.color) {
             playerCtx.font = "50px Arial";
             playerCtx.fillText(
                 "Loading...",
@@ -477,6 +488,14 @@ function main(asset) {
 function renderPlayer(playerState, playerClientState, playerCtx, otherPlayerCtx, asset) {
     playerCtx.clearRect(0, 0, GameConfig.canvasWidth, GameConfig.canvasHeight);
     otherPlayerCtx.clearRect(0, 0, GameConfig.canvasWidth, GameConfig.canvasHeight);
+
+    const foo = {};
+    for (const p in playerState) {
+        foo[p] = playerState[p].action;
+    }
+    foo["pclient"] = playerClientState.action;
+    // console.log(foo);
+
     /**
      * @param {string} player
      * @param {CanvasRenderingContext2D} ctx

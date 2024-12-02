@@ -22,7 +22,9 @@ function handleFerrisWheelClick(ferrisState, menu, socket) {
     menu.style.display = "flex";
     loading.textContent = `Waiting for (${ferrisState.players.length + 1}/${max}) players...`;
 
-    socket.send(JSON.stringify({ type: "ferris", data: { didJoin: true, player: Player.userId } }));
+    socket.send(
+        JSON.stringify({ type: "ferris", data: { action: "join", player: Player.userId } })
+    );
 }
 
 /**
@@ -51,7 +53,7 @@ function renderFerrisWheel(gameCtx, asset, pos, area, ferrisState) {
 function handleFerrisCancel(menu, socket) {
     menu.style.display = "none";
     socket.send(
-        JSON.stringify({ type: "ferris", data: { didJoin: false, player: Player.userId } })
+        JSON.stringify({ type: "ferris", data: { action: "cancel", player: Player.userId } })
     );
 }
 
@@ -60,14 +62,21 @@ function handleFerrisCancel(menu, socket) {
  * @param {HTMLParagraphElement} exit
  * @param {WebSocket} socket
  * @param {State} playerClientState
+ * @param {PlayerState} playerState
  */
-function handleFerriExit(ferrisState, exit, socket, playerClientState) {
+function handleFerriExit(ferrisState, exit, socket, playerClientState, playerState) {
     exit.style.display = "none";
+    socket.send(
+        JSON.stringify({ type: "ferris", data: { action: "exit", player: Player.userId } })
+    );
     for (const player of ferrisState.players) {
-        socket.send(JSON.stringify({ type: "ferris", data: { didJoin: false, player: player } }));
+        if (player !== Player.userId) {
+            playerState[player].action = "idle";
+        } else {
+            playerClientState.action = "idle";
+        }
     }
 
-    playerClientState.action = "idle";
     ferrisState.players = [];
 }
 
