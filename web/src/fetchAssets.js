@@ -85,14 +85,17 @@ async function fetchAsset() {
         ],
     };
 
-    let total = 0;
+	const status = {
+		total: 0,
+		loaded: 0,
+	}
+
     for (const i in path) {
         for (let j = 0; j < path[i].length; j++) {
-            total++;
+            status.total++;
         }
     }
 
-    let loaded = 0;
 
     /**
      * @type {Asset}
@@ -119,44 +122,45 @@ async function fetchAsset() {
         fireworks: [],
     };
 
-    await preloadImages(loaded, path.blueWalkLeft, preloaded.blueWalkLeft);
-    await preloadImages(loaded, path.blueWalkRight, preloaded.blueWalkRight);
-    await preloadImages(loaded, path.pinkWalkLeft, preloaded.pinkWalkLeft);
-    await preloadImages(loaded, path.pinkWalkRight, preloaded.pinkWalkRight);
-    await preloadImages(loaded, path.diningEmpty, preloaded.diningEmpty);
-    await preloadImages(loaded, path.diningBlue, preloaded.diningBlue);
-    await preloadImages(loaded, path.diningPink, preloaded.diningPink);
-    await preloadImages(loaded, path.diningBluePink, preloaded.diningBluePink);
-    await preloadImages(loaded, path.diningPinkBlue, preloaded.diningPinkBlue);
-    await preloadImages(loaded, path.background, preloaded.background);
-    await preloadImages(loaded, path.ferrisEmpty, preloaded.ferrisEmpty);
-    await preloadImages(loaded, path.ferris, preloaded.ferris);
-    await preloadImages(loaded, path.ferrisMenu, preloaded.ferrisMenu);
-    await preloadImages(loaded, path.lakeWaves, preloaded.lakeWaves);
-    await preloadImages(loaded, path.benchEmpty, preloaded.benchEmpty);
-    await preloadImages(loaded, path.benchBlue, preloaded.benchBlue);
-    await preloadImages(loaded, path.benchPink, preloaded.benchPink);
-    await preloadImages(loaded, path.bencheBluePink, preloaded.bencheBluePink);
-    await preloadImages(loaded, path.fireworks, preloaded.fireworks);
+    await preloadImages(status, path.blueWalkLeft, preloaded.blueWalkLeft);
+    await preloadImages(status, path.blueWalkRight, preloaded.blueWalkRight);
+    await preloadImages(status, path.pinkWalkLeft, preloaded.pinkWalkLeft);
+    await preloadImages(status, path.pinkWalkRight, preloaded.pinkWalkRight);
+    await preloadImages(status, path.diningEmpty, preloaded.diningEmpty);
+    await preloadImages(status, path.diningBlue, preloaded.diningBlue);
+    await preloadImages(status, path.diningPink, preloaded.diningPink);
+    await preloadImages(status, path.diningBluePink, preloaded.diningBluePink);
+    await preloadImages(status, path.diningPinkBlue, preloaded.diningPinkBlue);
+    await preloadImages(status, path.background, preloaded.background);
+    await preloadImages(status, path.ferrisEmpty, preloaded.ferrisEmpty);
+    await preloadImages(status, path.ferris, preloaded.ferris);
+    await preloadImages(status, path.ferrisMenu, preloaded.ferrisMenu);
+    await preloadImages(status, path.lakeWaves, preloaded.lakeWaves);
+    await preloadImages(status, path.benchEmpty, preloaded.benchEmpty);
+    await preloadImages(status, path.benchBlue, preloaded.benchBlue);
+    await preloadImages(status, path.benchPink, preloaded.benchPink);
+    await preloadImages(status, path.bencheBluePink, preloaded.bencheBluePink);
+    await preloadImages(status, path.fireworks, preloaded.fireworks);
 
     return preloaded;
 }
 
 /**
- * @param {number} loaded
+ * @param {{total: number, status: number}} status
  * @param {string[]} frames
  * @param {HTMLImageElement[]} target
  */
-function preloadImages(loaded, frames, target) {
+function preloadImages(status, frames, target) {
     return Promise.all(
         frames.map((frame) => {
             return new Promise((resolve) => {
                 const image = new Image();
                 image.src = frame;
-                image.onload = () => resolve(image);
+                image.onload = () =>{
+			status.loaded++
+			resolve(image)
+		};
                 target.push(image);
-                loaded++;
-                console.log(loaded);
             });
         })
     );
