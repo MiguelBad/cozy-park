@@ -85,17 +85,17 @@ async function fetchAsset() {
         ],
     };
 
-	const status = {
-		total: 0,
-		loaded: 0,
-	}
-
+    const status = {
+        total: 0,
+        loaded: 0,
+    };
     for (const i in path) {
         for (let j = 0; j < path[i].length; j++) {
             status.total++;
         }
     }
 
+    loadingStatus(status);
 
     /**
      * @type {Asset}
@@ -146,7 +146,7 @@ async function fetchAsset() {
 }
 
 /**
- * @param {{total: number, status: number}} status
+ * @param {{total: number, loaded: number}} status
  * @param {string[]} frames
  * @param {HTMLImageElement[]} target
  */
@@ -156,12 +156,27 @@ function preloadImages(status, frames, target) {
             return new Promise((resolve) => {
                 const image = new Image();
                 image.src = frame;
-                image.onload = () =>{
-			status.loaded++
-			resolve(image)
-		};
+                image.onload = () => {
+                    status.loaded++;
+                    resolve(image);
+                };
                 target.push(image);
             });
         })
     );
+}
+
+/**
+ * @param {{total: number, loaded: number}} status
+ */
+async function loadingStatus(status) {
+    const fetchLoadStatus = document.getElementById("fetch-load--status");
+    if (!(fetchLoadStatus instanceof HTMLParagraphElement)) {
+        throw new Error("cannot find fetch load element");
+    }
+
+    while (status.loaded !== status.total) {
+        fetchLoadStatus.textContent = `${status.loaded} out of ${status.total} loaded}`;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+    }
 }

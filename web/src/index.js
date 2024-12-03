@@ -33,13 +33,13 @@ document.addEventListener("contextmenu", (event) => {
 });
 
 document.addEventListener("DOMContentLoaded", async function () {
-    const fetchLoad = document.getElementById("fetch-load");
-    if (!(fetchLoad instanceof HTMLParagraphElement)) {
+    const fetchLoadContainer = document.getElementById("fetch-load--container");
+    if (!(fetchLoadContainer instanceof HTMLDivElement)) {
         throw new Error("cannot find fetch load element");
     }
 
     const asset = await fetchAsset();
-    fetchLoad.hidden = true;
+    fetchLoadContainer.hidden = true;
 
     await login();
 
