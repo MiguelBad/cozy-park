@@ -210,7 +210,7 @@ function main(asset) {
         Firework: { x: Area.Firework.x, y: Area.Firework.y },
     };
 
-    const socket = new WebSocket("ws://happy5thanniversary.win/ws");
+    const socket = new WebSocket("wss://happy5thanniversary.win/ws");
     socket.onopen = () => {
         const data = {
             color: Player.color,
