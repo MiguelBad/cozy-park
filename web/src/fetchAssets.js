@@ -1,5 +1,5 @@
 /**
- * @returns {Promise<{
+ * @typedef {{
  * blueWalkLeft: HTMLImageElement[],
  * blueWalkRight: HTMLImageElement[],
  * pinkWalkLeft: HTMLImageElement[],
@@ -9,7 +9,7 @@
  * diningPink: HTMLImageElement[],
  * diningBluePink: HTMLImageElement[],
  * diningPinkBlue: HTMLImageElement[],
- * background: HTMLImageElement[],
+ * background: HTMLImageElement[]
  * ferrisEmpty: HTMLImageElement[],
  * ferris: HTMLImageElement[],
  * ferrisMenu: HTMLImageElement[],
@@ -19,7 +19,11 @@
  * benchBlue: HTMLImageElement[],
  * bencheBluePink: HTMLImageElement[],
  * fireworks: HTMLImageElement[],
- * }>}
+ *}} Asset
+ */
+
+/**
+ * @returns {Promise<Asset>}
  */
 async function fetchAsset() {
     const path = {
@@ -82,27 +86,7 @@ async function fetchAsset() {
     };
 
     /**
-     * @type {{
-     * blueWalkLeft: HTMLImageElement[],
-     * blueWalkRight: HTMLImageElement[],
-     * pinkWalkLeft: HTMLImageElement[],
-     * pinkWalkRight: HTMLImageElement[],
-     * diningEmpty: HTMLImageElement[],
-     * diningBlue: HTMLImageElement[],
-     * diningPink: HTMLImageElement[],
-     * diningBluePink: HTMLImageElement[],
-     * diningPinkBlue: HTMLImageElement[],
-     * background: HTMLImageElement[]
-     * ferrisEmpty: HTMLImageElement[],
-     * ferris: HTMLImageElement[],
-     * ferrisMenu: HTMLImageElement[],
-     * lakeWaves: HTMLImageElement[],
-     * benchEmpty: HTMLImageElement[],
-     * benchPink: HTMLImageElement[],
-     * benchBlue: HTMLImageElement[],
-     * bencheBluePink: HTMLImageElement[],
-     * fireworks: HTMLImageElement[],
-     * }}
+     * @type {Asset}
      */
     const preloaded = {
         blueWalkLeft: [],

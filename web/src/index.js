@@ -1,25 +1,4 @@
 /**
- * @typedef {{
- * blueWalkLeft: HTMLImageElement[],
- * blueWalkRight: HTMLImageElement[],
- * pinkWalkLeft: HTMLImageElement[],
- * pinkWalkRight: HTMLImageElement[],
- * diningEmpty: HTMLImageElement[],
- * diningBlue: HTMLImageElement[],
- * diningPink: HTMLImageElement[],
- * diningBluePink: HTMLImageElement[],
- * diningPinkBlue: HTMLImageElement[],
- * background: HTMLImageElement[]
- * ferrisEmpty: HTMLImageElement[],
- * ferris: HTMLImageElement[],
- * ferrisMenu: HTMLImageElement[],
- * lakeWaves: HTMLImageElement[],
- * benchEmpty: HTMLImageElement[],
- * benchPink: HTMLImageElement[],
- * benchBlue: HTMLImageElement[],
- * bencheBluePink: HTMLImageElement[],
- * fireworks: HTMLImageElement[],
- *}} Asset
  * @typedef {{ color: string, action: string, x: number, y: number, frame: number, changeFrame: boolean, facing: string}} State
  * @typedef { Object<string, State>} PlayerState
  * @typedef {{x: number, y: number, facing: string, frame: number, changeFrame: boolean, action: string}} Data
