@@ -122,6 +122,13 @@ body {
     margin: 10px;
 }
 
+#fetch-load--status {
+    color: white;
+    text-align: center;
+    font-size: 15px;
+    margin: 10px;
+}
+
 #ferris-wheel-menu--container {
     position: absolute;
     flex-direction: column;

@@ -176,7 +176,7 @@ async function loadingStatus(status) {
     }
 
     while (status.loaded !== status.total) {
-        fetchLoadStatus.textContent = `${status.loaded} out of ${status.total} loaded}`;
+        fetchLoadStatus.textContent = `${status.loaded} out of ${status.total} loaded`;
         await new Promise((resolve) => setTimeout(resolve, 100));
     }
 }
