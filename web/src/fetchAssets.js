@@ -85,6 +85,15 @@ async function fetchAsset() {
         ],
     };
 
+    let total = 0;
+    for (const i in path) {
+        for (let j = 0; j < path[i].length; j++) {
+            total++;
+        }
+    }
+
+    let loaded = 0;
+
     /**
      * @type {Asset}
      */
@@ -110,34 +119,35 @@ async function fetchAsset() {
         fireworks: [],
     };
 
-    await preloadImages(path.blueWalkLeft, preloaded.blueWalkLeft);
-    await preloadImages(path.blueWalkRight, preloaded.blueWalkRight);
-    await preloadImages(path.pinkWalkLeft, preloaded.pinkWalkLeft);
-    await preloadImages(path.pinkWalkRight, preloaded.pinkWalkRight);
-    await preloadImages(path.diningEmpty, preloaded.diningEmpty);
-    await preloadImages(path.diningBlue, preloaded.diningBlue);
-    await preloadImages(path.diningPink, preloaded.diningPink);
-    await preloadImages(path.diningBluePink, preloaded.diningBluePink);
-    await preloadImages(path.diningPinkBlue, preloaded.diningPinkBlue);
-    await preloadImages(path.background, preloaded.background);
-    await preloadImages(path.ferrisEmpty, preloaded.ferrisEmpty);
-    await preloadImages(path.ferris, preloaded.ferris);
-    await preloadImages(path.ferrisMenu, preloaded.ferrisMenu);
-    await preloadImages(path.lakeWaves, preloaded.lakeWaves);
-    await preloadImages(path.benchEmpty, preloaded.benchEmpty);
-    await preloadImages(path.benchBlue, preloaded.benchBlue);
-    await preloadImages(path.benchPink, preloaded.benchPink);
-    await preloadImages(path.bencheBluePink, preloaded.bencheBluePink);
-    await preloadImages(path.fireworks, preloaded.fireworks);
+    await preloadImages(loaded, path.blueWalkLeft, preloaded.blueWalkLeft);
+    await preloadImages(loaded, path.blueWalkRight, preloaded.blueWalkRight);
+    await preloadImages(loaded, path.pinkWalkLeft, preloaded.pinkWalkLeft);
+    await preloadImages(loaded, path.pinkWalkRight, preloaded.pinkWalkRight);
+    await preloadImages(loaded, path.diningEmpty, preloaded.diningEmpty);
+    await preloadImages(loaded, path.diningBlue, preloaded.diningBlue);
+    await preloadImages(loaded, path.diningPink, preloaded.diningPink);
+    await preloadImages(loaded, path.diningBluePink, preloaded.diningBluePink);
+    await preloadImages(loaded, path.diningPinkBlue, preloaded.diningPinkBlue);
+    await preloadImages(loaded, path.background, preloaded.background);
+    await preloadImages(loaded, path.ferrisEmpty, preloaded.ferrisEmpty);
+    await preloadImages(loaded, path.ferris, preloaded.ferris);
+    await preloadImages(loaded, path.ferrisMenu, preloaded.ferrisMenu);
+    await preloadImages(loaded, path.lakeWaves, preloaded.lakeWaves);
+    await preloadImages(loaded, path.benchEmpty, preloaded.benchEmpty);
+    await preloadImages(loaded, path.benchBlue, preloaded.benchBlue);
+    await preloadImages(loaded, path.benchPink, preloaded.benchPink);
+    await preloadImages(loaded, path.bencheBluePink, preloaded.bencheBluePink);
+    await preloadImages(loaded, path.fireworks, preloaded.fireworks);
 
     return preloaded;
 }
 
 /**
+ * @param {number} loaded
  * @param {string[]} frames
  * @param {HTMLImageElement[]} target
  */
-function preloadImages(frames, target) {
+function preloadImages(loaded, frames, target) {
     return Promise.all(
         frames.map((frame) => {
             return new Promise((resolve) => {
@@ -145,6 +155,8 @@ function preloadImages(frames, target) {
                 image.src = frame;
                 image.onload = () => resolve(image);
                 target.push(image);
+                loaded++;
+                console.log(loaded);
             });
         })
     );
