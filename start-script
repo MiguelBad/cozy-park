@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 
-tmux new-session -d -s cozypark -n Vim 
+tmux_running=$(pgrep tmux)
 
-tmux send-keys -t cozypark:0 'vim .' C-m
+if ![[ -z $tmux_running ]]; then
+    tmux new-session -d -s cozy-park -n Vim 
+fi
 
-tmux new-window -t cozypark:1 -n Server
-tmux send-keys -t cozypark:1 'cmd/server' C-m
+tmux send-keys -t cozy-park:0 'vim .' C-m
 
-tmux split-window -t cozypark:1 -h
-tmux send-keys -t cozypark:1 'npx http-server web -p 8080' C-m
+tmux new-window -t cozy-park:1 -n Server
+tmux send-keys -t cozy-park:1 'cmd/server' C-m
 
-tmux attach-session -t cozypark
+tmux split-window -t cozy-park:1 -h
+tmux send-keys -t cozy-park:1 'npx http-server web -p 8080' C-m
+
+tmux attach-session -t cozy-park
