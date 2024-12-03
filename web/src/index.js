@@ -210,7 +210,7 @@ function main(asset) {
         Firework: { x: Area.Firework.x, y: Area.Firework.y },
     };
 
-    const socket = new WebSocket(`ws://${GameConfig.ip}:1205/ws`);
+    const socket = new WebSocket("ws://happy5thanniversary.win/ws");
     socket.onopen = () => {
         const data = {
             color: Player.color,
@@ -245,7 +245,7 @@ function main(asset) {
         const serverMessage = JSON.parse(event.data);
         switch (serverMessage.type) {
             case "playerState":
-                if (serverMessage.id !== Player.userId) {
+                if (serverMessage && serverMessage.id !== Player.userId) {
                     playerState[serverMessage.id] = serverMessage.state;
                 }
                 if (
