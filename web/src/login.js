@@ -19,7 +19,7 @@ function login() {
             const val = loginInput.value;
 
             try {
-                const response = await fetch("http://happy5thanniversary.win/login", {
+                const response = await fetch("https://happy5thanniversary.win/login", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ password: val }),
