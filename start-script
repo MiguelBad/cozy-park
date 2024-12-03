@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+tmux new-session -d -s cozypark -n Vim 
+
+tmux send-keys -t cozypark:0 'vim .' C-m
+
+tmux new-window -t cozypark:1 -n Server
+tmux send-keys -t cozypark:1 'cmd/server' C-m
+
+tmux split-window -t cozypark:1 -h
+tmux send-keys -t cozypark:1 'npx http-server web -p 8080' C-m
+
+tmux attach-session -t cozypark
