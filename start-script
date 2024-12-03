@@ -2,7 +2,7 @@
 
 tmux_running=$(pgrep tmux)
 
-if ![[ -z $tmux_running ]]; then
+if [[ -z $tmux_running ]] || !(tmux has-session -t "cozy-park" 2>/dev/null); then
     tmux new-session -d -s cozy-park -n Vim 
 fi
 
