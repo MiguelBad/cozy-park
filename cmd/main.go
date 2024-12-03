@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -127,9 +128,18 @@ type FerrisState struct {
 	mu sync.Mutex
 }
 
+type LoginRequest struct {
+	Password string `json:"password"`
+}
+
+type ResponseData struct {
+	Status bool `json:"status"`
+}
+
 func main() {
-	http.HandleFunc("/ws", handleConnections)
-	http.HandleFunc("/login", handleLogin)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/login", handleLogin)
+	mux.HandleFunc("/ws", handleConnections)
 
 	go handleMoveBroadcast()
 	go handleDisconnectBroadcast()
@@ -138,11 +148,41 @@ func main() {
 	go handleFerrisState()
 	go handleBenchBroadcast()
 
-	log.Fatal(http.ListenAndServe(":1205", nil))
+	log.Fatal(http.ListenAndServe(":1205", corsMiddleware(mux)))
+}
+
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		if req.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, req)
+	})
 }
 
 func handleLogin(w http.ResponseWriter, req *http.Request) {
-	log.Println(w, req)
+	if req.Method == http.MethodPost {
+		var loginRequest LoginRequest
+		err := json.NewDecoder(req.Body).Decode(&loginRequest)
+		if err != nil {
+			http.Error(w, "invalid request bode", http.StatusBadRequest)
+		}
+
+		response := &ResponseData{}
+		if loginRequest.Password == os.Getenv("PASSWORD") {
+			response.Status = true
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+	}
 }
 
 func newPlayerList() *PlayerList {

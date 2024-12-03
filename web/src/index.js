@@ -98,18 +98,17 @@ function login() {
                 const response = await fetch("http://localhost:1205/login", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ val }),
+                    body: JSON.stringify({ password: val }),
                 });
                 if (!response.ok) {
                     throw new Error(`http error: ${response.status}`);
                 }
 
                 /**
-                 * @type {{validUser: boolean}}
+                 * @type {{status: boolean}}
                  */
-                const result = await response.json();
-
-                if (result) {
+                const data = await response.json();
+                if (data.status) {
                     loginContainer.style.display = "none";
                     resolve("valid");
                 }
