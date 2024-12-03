@@ -17,6 +17,10 @@ body {
     flex-direction: column;
 }
 
+#login--container {
+    display: none;
+}
+
 #player-select--container {
     background-color: white;
     width: 80vw;

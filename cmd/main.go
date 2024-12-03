@@ -129,6 +129,7 @@ type FerrisState struct {
 
 func main() {
 	http.HandleFunc("/ws", handleConnections)
+	http.HandleFunc("/login", handleLogin)
 
 	go handleMoveBroadcast()
 	go handleDisconnectBroadcast()
@@ -138,6 +139,10 @@ func main() {
 	go handleBenchBroadcast()
 
 	log.Fatal(http.ListenAndServe(":1205", nil))
+}
+
+func handleLogin(w http.ResponseWriter, req *http.Request) {
+	log.Println(w, req)
 }
 
 func newPlayerList() *PlayerList {
